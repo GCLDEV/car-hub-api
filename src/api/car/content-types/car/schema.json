@@ -44,12 +44,12 @@
     },
     "fuelType": {
       "type": "enumeration",
-      "enum": ["Gasolina", "Etanol", "Flex", "Diesel", "Elétrico", "Híbrido"],
+      "enum": ["Gasoline", "Ethanol", "Flex", "Diesel", "CNG", "Hybrid", "Electric"],
       "required": true
     },
     "transmission": {
       "type": "enumeration",
-      "enum": ["Manual", "Automatic", "CVT"],
+      "enum": ["Manual", "Automatic", "CVT", "Automated"],
       "required": true
     },
     "color": {
@@ -84,6 +84,25 @@
       "type": "integer",
       "default": 0,
       "min": 0
+    },
+    "engine": {
+      "type": "string",
+      "required": true
+    },
+    "doors": {
+      "type": "integer",
+      "required": true,
+      "min": 2,
+      "max": 5
+    },
+    "seats": {
+      "type": "integer", 
+      "required": true,
+      "min": 2,
+      "max": 8
+    },
+    "features": {
+      "type": "json"
     },
     "specs": {
       "type": "json"
