@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "messages",
+  "info": {
+    "singularName": "message",
+    "pluralName": "messages",
+    "displayName": "Message",
+    "description": "Messages between users for car inquiries"
+  },
+  "options": {
+    "draftAndPublish": false,
+    "comment": ""
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "content": {
+      "type": "text",
+      "required": true,
+      "maxLength": 2000
+    },
+    "sender": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "sentMessages"
+    },
+    "receiver": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "receivedMessages"
+    },
+    "car": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::car.car",
+      "inversedBy": "messages"
+    },
+    "isRead": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/favorites",
+      "handler": "favorite.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/favorites",
+      "handler": "favorite.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/favorites/:id",
+      "handler": "favorite.delete",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/favorites/by-car/:carId",
+      "handler": "favorite.removeByCarId",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

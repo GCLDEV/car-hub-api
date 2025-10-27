@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "favorites",
+  "info": {
+    "singularName": "favorite",
+    "pluralName": "favorites",
+    "displayName": "Favorite",
+    "description": "User favorites for cars"
+  },
+  "options": {
+    "draftAndPublish": false,
+    "comment": ""
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "favorites"
+    },
+    "car": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::car.car",
+      "inversedBy": "favorites"
+    }
+  }
+}

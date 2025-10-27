@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: car-hub-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: car_hub
+      MYSQL_USER: strapi
+      MYSQL_PASSWORD: strapi123
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+
+  strapi:
+    build: .
+    container_name: car-hub-strapi
+    restart: unless-stopped
+    environment:
+      DATABASE_CLIENT: mysql
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      DATABASE_NAME: car_hub
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: strapi123
+      JWT_SECRET: your-jwt-secret-key-here
+      ADMIN_JWT_SECRET: your-admin-jwt-secret-here
+      APP_KEYS: app-key-1,app-key-2,app-key-3,app-key-4
+      API_TOKEN_SALT: your-api-token-salt
+    volumes:
+      - ./config:/opt/app/config
+      - ./src:/opt/app/src
+      - ./package.json:/opt/package.json
+      - ./yarn.lock:/opt/yarn.lock
+      - ./.env:/opt/app/.env
+      - ./public/uploads:/opt/app/public/uploads
+    ports:
+      - "1337:1337"
+    depends_on:
+      - db
+
+volumes:
+  db_data:

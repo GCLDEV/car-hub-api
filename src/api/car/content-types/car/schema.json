@@ -1,0 +1,110 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cars",
+  "info": {
+    "singularName": "car",
+    "pluralName": "cars",
+    "displayName": "Car",
+    "description": "Car listings for the marketplace"
+  },
+  "options": {
+    "draftAndPublish": false,
+    "comment": ""
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 255
+    },
+    "brand": {
+      "type": "string",
+      "required": true
+    },
+    "model": {
+      "type": "string",
+      "required": true
+    },
+    "year": {
+      "type": "integer",
+      "required": true,
+      "min": 1990,
+      "max": 2030
+    },
+    "price": {
+      "type": "biginteger",
+      "required": true,
+      "min": 0
+    },
+    "km": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "fuelType": {
+      "type": "enumeration",
+      "enum": ["Gasolina", "Etanol", "Flex", "Diesel", "Elétrico", "Híbrido"],
+      "required": true
+    },
+    "transmission": {
+      "type": "enumeration",
+      "enum": ["Manual", "Automatic", "CVT"],
+      "required": true
+    },
+    "color": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": true
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "location": {
+      "type": "string",
+      "required": true
+    },
+    "cityState": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["available", "sold", "reserved"],
+      "default": "available",
+      "required": true
+    },
+    "views": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "specs": {
+      "type": "json"
+    },
+    "seller": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "cars"
+    },
+    "favorites": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::favorite.favorite",
+      "mappedBy": "car"
+    },
+    "messages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::message.message",
+      "mappedBy": "car"
+    }
+  }
+}

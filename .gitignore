@@ -129,3 +129,77 @@ dist
 build
 .strapi-updater.json
 .strapi-cloud.json
+
+############################
+# Docker & Database
+############################
+
+# Docker volumes e dados do banco
+database/data/
+database/logs/
+mysql-data/
+postgres-data/
+
+# Arquivos de docker locais
+docker-compose.override.yml
+.dockerignore
+
+############################
+# Uploads & Media
+############################
+
+# Uploads do Strapi (arquivos enviados pelos usuários)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Cache de imagens
+.next/cache/
+.cache/
+
+############################
+# Environment & Secrets
+############################
+
+# Múltiplos arquivos de ambiente
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.test
+
+# Arquivos de configuração local
+config/local.js
+config/local.json
+
+############################
+# IDE & Editors
+############################
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains
+.idea/
+
+# Vim
+*.swp
+*.swo
+*~
+
+############################
+# Backup & Temporary
+############################
+
+# Backups do banco de dados
+*.backup
+*.dump
+*.sql.gz
+
+# Arquivos temporários
+temp/
+tmp/
+*.tmp
