@@ -450,9 +450,20 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text & Schema.Attribute.Required;
+    doors: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 2;
+        },
+        number
+      >;
+    engine: Schema.Attribute.String & Schema.Attribute.Required;
     favorites: Schema.Attribute.Relation<'oneToMany', 'api::favorite.favorite'>;
+    features: Schema.Attribute.JSON;
     fuelType: Schema.Attribute.Enumeration<
-      ['Gasolina', 'Etanol', 'Flex', 'Diesel', 'El\u00E9trico', 'H\u00EDbrido']
+      ['Gasoline', 'Ethanol', 'Flex', 'Diesel', 'CNG', 'Hybrid', 'Electric']
     > &
       Schema.Attribute.Required;
     images: Schema.Attribute.Media<'images', true>;
@@ -479,6 +490,15 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
         number
       >;
     publishedAt: Schema.Attribute.DateTime;
+    seats: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 8;
+          min: 2;
+        },
+        number
+      >;
     seller: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'
@@ -492,7 +512,9 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 255;
       }>;
-    transmission: Schema.Attribute.Enumeration<['Manual', 'Automatic', 'CVT']> &
+    transmission: Schema.Attribute.Enumeration<
+      ['Manual', 'Automatic', 'CVT', 'Automated']
+    > &
       Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
