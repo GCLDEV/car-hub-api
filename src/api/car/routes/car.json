@@ -10,6 +10,14 @@
     },
     {
       "method": "GET",
+      "path": "/cars/search",
+      "handler": "car.search",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
       "path": "/cars/:id",
       "handler": "car.findOne",
       "config": {
