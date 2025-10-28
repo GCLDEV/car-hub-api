@@ -52,6 +52,12 @@
       "enum": ["Manual", "Automatic", "CVT", "Automated"],
       "required": true
     },
+    "category": {
+      "type": "enumeration",
+      "enum": ["sedan", "suv", "sport", "eletricos", "hatch"],
+      "required": true,
+      "default": "sedan"
+    },
     "color": {
       "type": "string",
       "required": true

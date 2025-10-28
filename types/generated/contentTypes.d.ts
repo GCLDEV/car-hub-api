@@ -444,6 +444,11 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
   };
   attributes: {
     brand: Schema.Attribute.String & Schema.Attribute.Required;
+    category: Schema.Attribute.Enumeration<
+      ['sedan', 'suv', 'sport', 'eletricos', 'hatch']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'sedan'>;
     cityState: Schema.Attribute.String & Schema.Attribute.Required;
     color: Schema.Attribute.String & Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
