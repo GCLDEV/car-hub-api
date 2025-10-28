@@ -91,6 +91,17 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
         pageSize = 25
       } = query
 
+      strapi.log.info('Search parameters received:', {
+        q,
+        brand,
+        yearFrom,
+        yearTo,
+        priceFrom,
+        priceTo,
+        fuelType,
+        transmission
+      })
+
       // Build advanced filters object
       const filters: any = {
         status: 'available' // Always filter available cars
@@ -121,6 +132,7 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
         filters.year = {}
         if (yearFrom) filters.year.$gte = parseInt(yearFrom as string, 10)
         if (yearTo) filters.year.$lte = parseInt(yearTo as string, 10)
+        strapi.log.info('Year filters applied:', filters.year)
       }
 
       if (priceFrom || priceTo) {
@@ -134,6 +146,8 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
         if (kmFrom) filters.km.$gte = parseInt(kmFrom as string, 10)
         if (kmTo) filters.km.$lte = parseInt(kmTo as string, 10)
       }
+
+      strapi.log.info('Final filters object:', JSON.stringify(filters, null, 2))
 
       // Parse sort parameter
       const parsedSort = parseSortParam(sortBy as string)
@@ -158,6 +172,8 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
       )
 
       const sanitizedResults = await this.sanitizeOutput(results, ctx)
+
+      strapi.log.info(`Search returned ${results.length} cars`)
 
       return this.transformResponse(sanitizedResults, { 
         pagination,
