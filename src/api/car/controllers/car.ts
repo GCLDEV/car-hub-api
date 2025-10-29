@@ -227,8 +227,13 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
     // Set the seller to the authenticated user
     ctx.request.body.data.seller = user.id
 
+    // Validate and set status
+    const validStatuses = ['available', 'sold', 'reserved']
+    if (!ctx.request.body.data.status || !validStatuses.includes(ctx.request.body.data.status)) {
+      ctx.request.body.data.status = 'available'
+    }
+
     // Set default values
-    ctx.request.body.data.status = 'available'
     ctx.request.body.data.views = 0
 
     const entity = await strapi.entityService.create('api::car.car', {
@@ -270,6 +275,19 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
     delete ctx.request.body.data.seller
     delete ctx.request.body.data.views
 
+    // Debug: Log received data
+    console.log('📝 Dados recebidos para update:', JSON.stringify(ctx.request.body.data, null, 2))
+
+    // Force status to valid value if provided
+    if (ctx.request.body.data.status) {
+      const validStatuses = ['available', 'sold', 'reserved']
+      if (!validStatuses.includes(ctx.request.body.data.status)) {
+        console.log('⚠️ Status inválido recebido:', ctx.request.body.data.status)
+        ctx.request.body.data.status = 'available' // Force valid value instead of error
+      }
+      console.log('✅ Status final:', ctx.request.body.data.status)
+    }
+
     const entity = await strapi.entityService.update('api::car.car', id, {
       data: ctx.request.body.data,
       populate: {
@@ -310,5 +328,36 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
     const sanitizedResults = await this.sanitizeOutput(entity, ctx)
 
     return this.transformResponse(sanitizedResults)
+  },
+
+  // Buscar carros do usuário logado
+  async findUserCars(ctx) {
+    const { user } = ctx.state
+
+    if (!user) {
+      return ctx.unauthorized('You must be authenticated to view your cars')
+    }
+
+    console.log('🔍 Buscando carros do usuário:', user.id)
+
+    try {
+      const entities = await strapi.entityService.findMany('api::car.car', {
+        filters: {
+          seller: user.id
+        },
+        populate: {
+          images: true
+        },
+        sort: { createdAt: 'desc' }
+      })
+
+      console.log('✅ Carros encontrados:', entities?.length || 0)
+
+      const sanitizedResults = await this.sanitizeOutput(entities, ctx)
+      return this.transformResponse(sanitizedResults)
+    } catch (error) {
+      console.error('❌ Erro ao buscar carros do usuário:', error)
+      ctx.throw(500, 'Erro ao buscar carros do usuário')
+    }
   }
 }))

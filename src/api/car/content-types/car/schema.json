@@ -39,32 +39,31 @@
     },
     "km": {
       "type": "integer",
-      "required": true,
+      "required": false,
       "min": 0
     },
     "fuelType": {
       "type": "enumeration",
       "enum": ["Gasoline", "Ethanol", "Flex", "Diesel", "CNG", "Hybrid", "Electric"],
-      "required": true
+      "required": false
     },
     "transmission": {
       "type": "enumeration",
       "enum": ["Manual", "Automatic", "CVT", "Automated"],
-      "required": true
+      "required": false
     },
     "category": {
       "type": "enumeration",
-      "enum": ["sedan", "suv", "sport", "eletricos", "hatch"],
-      "required": true,
-      "default": "sedan"
+      "enum": ["Sedan", "Hatchback", "SUV", "Pickup", "Wagon", "Coupe", "Conversível", "Minivan", "Crossover", "Compact"],
+      "required": true
     },
     "color": {
       "type": "string",
-      "required": true
+      "required": false
     },
     "description": {
       "type": "text",
-      "required": true
+      "required": false
     },
     "images": {
       "type": "media",
@@ -80,12 +79,6 @@
       "type": "string",
       "required": true
     },
-    "status": {
-      "type": "enumeration",
-      "enum": ["available", "sold", "reserved"],
-      "default": "available",
-      "required": true
-    },
     "views": {
       "type": "integer",
       "default": 0,
@@ -93,17 +86,17 @@
     },
     "engine": {
       "type": "string",
-      "required": true
+      "required": false
     },
     "doors": {
       "type": "integer",
-      "required": true,
+      "required": false,
       "min": 2,
       "max": 5
     },
     "seats": {
       "type": "integer", 
-      "required": true,
+      "required": false,
       "min": 2,
       "max": 8
     },

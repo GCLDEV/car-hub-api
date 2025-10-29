@@ -1,52 +1,35 @@
 export default ({ env }) => {
-  const useS3 = env('USE_S3', 'false') === 'true';
-  
   return {
     upload: {
-      config: useS3 
-        ? {
-            // Configuração S3 (baseada na documentação oficial)
-            provider: 'aws-s3',
-            providerOptions: {
-              s3Options: {
-                credentials: {
-                  accessKeyId: env('AWS_ACCESS_KEY_ID'),
-                  secretAccessKey: env('AWS_ACCESS_SECRET'),
-                },
-                region: env('AWS_REGION', 'us-east-1'),
-                params: {
-                  signedUrlExpires: env('AWS_SIGNED_URL_EXPIRES', 15 * 60),
-                  Bucket: env('AWS_S3_BUCKET', 'car-hub-storage'),
-                },
-              },
+      config: {
+        // Configuração AWS S3 baseada na documentação oficial Strapi v5
+        provider: 'aws-s3',
+        providerOptions: {
+          baseUrl: env('CDN_URL'), // Opcional: URL customizada
+          rootPath: env('CDN_ROOT_PATH'), // Opcional: pasta raiz
+          s3Options: {
+            credentials: {
+              accessKeyId: env('AWS_ACCESS_KEY_ID'),
+              secretAccessKey: env('AWS_ACCESS_SECRET'),
             },
-            actionOptions: {
-              upload: {},
-              uploadStream: {},
-              delete: {},
-            },
-          }
-        : {
-            // Configuração Local (fallback)
-            provider: 'local',
-            providerOptions: {
-              sizeLimit: 10 * 1024 * 1024, // 10MB
-            },
-            actionOptions: {
-              upload: {},
-              uploadStream: {},
-              delete: {},
+            region: env('AWS_REGION', 'us-east-1'),
+            params: {
+              ACL: env('AWS_ACL', 'public-read'),
+              signedUrlExpires: env('AWS_SIGNED_URL_EXPIRES', 15 * 60),
+              Bucket: env('AWS_BUCKET', 'car-hub-storage'), // Usar AWS_BUCKET como na doc
             },
           },
-      // Configurações de breakpoints movidas para o nível superior
-      breakpoints: {
-        xlarge: 1920,
-        large: 1000,
-        medium: 750,
-        small: 500,
-        xsmall: 64
+        },
+        actionOptions: {
+          upload: {},
+          uploadStream: {},
+          delete: {},
+        },
       },
       sizeLimit: 10 * 1024 * 1024, // 10MB
+      // DESABILITAR todas as otimizações locais para S3
+      breakpoints: {}, // Sem breakpoints responsivos
+      responsive: false, // Desabilita geração de múltiplos formatos
     },
     'users-permissions': {
       config: {

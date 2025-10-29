@@ -1,5 +1,18 @@
 // import type { Core } from '@strapi/strapi';
 
+// Capturar erros EPERM globalmente para evitar crash no Windows
+process.on('uncaughtException', (error: any) => {
+  if (error.code === 'EPERM' && error.syscall === 'unlink') {
+    console.warn('⚠️ Erro EPERM capturado globalmente (Windows):', error.path);
+    console.log('✅ Continuando execução...');
+    return; // Não encerrar o processo
+  }
+  
+  // Para outros erros, usar comportamento padrão
+  console.error('❌ Erro não tratado:', error);
+  process.exit(1);
+});
+
 async function setupRolesAndPermissions(strapi) {
   try {
     // Get the existing roles

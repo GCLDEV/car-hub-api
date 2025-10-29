@@ -18,6 +18,14 @@
     },
     {
       "method": "GET",
+      "path": "/cars/me",
+      "handler": "car.findUserCars",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
       "path": "/cars/:id",
       "handler": "car.findOne",
       "config": {

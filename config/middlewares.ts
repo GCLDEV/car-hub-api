@@ -8,8 +8,20 @@ export default [
         useDefaults: true,
         directives: {
           'connect-src': ["'self'", 'https:'],
-          'img-src': ["'self'", 'data:', 'blob:', 'https:'],
-          'media-src': ["'self'", 'data:', 'blob:', 'https:'],
+          'img-src': [
+            "'self'",
+            'data:',
+            'blob:',
+            'market-assets.strapi.io',
+            'car-hub-storage.s3.us-east-1.amazonaws.com', // Bucket S3
+          ],
+          'media-src': [
+            "'self'",
+            'data:',
+            'blob:',
+            'market-assets.strapi.io',
+            'car-hub-storage.s3.us-east-1.amazonaws.com', // Bucket S3
+          ],
           upgradeInsecureRequests: null,
         },
       },
@@ -18,7 +30,6 @@ export default [
   {
     name: 'strapi::cors',
     config: {
-      enabled: true,
       headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
       origin: [
         'http://localhost:1337',

@@ -445,18 +445,27 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
   attributes: {
     brand: Schema.Attribute.String & Schema.Attribute.Required;
     category: Schema.Attribute.Enumeration<
-      ['sedan', 'suv', 'sport', 'eletricos', 'hatch']
+      [
+        'Sedan',
+        'Hatchback',
+        'SUV',
+        'Pickup',
+        'Wagon',
+        'Coupe',
+        'Convers\u00EDvel',
+        'Minivan',
+        'Crossover',
+        'Compact',
+      ]
     > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'sedan'>;
+      Schema.Attribute.Required;
     cityState: Schema.Attribute.String & Schema.Attribute.Required;
-    color: Schema.Attribute.String & Schema.Attribute.Required;
+    color: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    description: Schema.Attribute.Text & Schema.Attribute.Required;
+    description: Schema.Attribute.Text;
     doors: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
         {
           max: 5;
@@ -464,16 +473,14 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
         },
         number
       >;
-    engine: Schema.Attribute.String & Schema.Attribute.Required;
+    engine: Schema.Attribute.String;
     favorites: Schema.Attribute.Relation<'oneToMany', 'api::favorite.favorite'>;
     features: Schema.Attribute.JSON;
     fuelType: Schema.Attribute.Enumeration<
       ['Gasoline', 'Ethanol', 'Flex', 'Diesel', 'CNG', 'Hybrid', 'Electric']
-    > &
-      Schema.Attribute.Required;
+    >;
     images: Schema.Attribute.Media<'images', true>;
     km: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
         {
           min: 0;
@@ -496,7 +503,6 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
       >;
     publishedAt: Schema.Attribute.DateTime;
     seats: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
         {
           max: 8;
@@ -509,9 +515,6 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
       'plugin::users-permissions.user'
     >;
     specs: Schema.Attribute.JSON;
-    status: Schema.Attribute.Enumeration<['available', 'sold', 'reserved']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'available'>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
@@ -519,8 +522,7 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
       }>;
     transmission: Schema.Attribute.Enumeration<
       ['Manual', 'Automatic', 'CVT', 'Automated']
-    > &
-      Schema.Attribute.Required;
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
