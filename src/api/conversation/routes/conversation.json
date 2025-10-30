@@ -2,24 +2,24 @@
   "routes": [
     {
       "method": "GET",
-      "path": "/messages",
-      "handler": "message.find",
+      "path": "/conversations",
+      "handler": "conversation.find",
       "config": {
         "policies": []
       }
     },
     {
-      "method": "GET",
-      "path": "/messages/conversations",
-      "handler": "message.conversations",
+      "method": "GET", 
+      "path": "/conversations/:id",
+      "handler": "conversation.findOne",
       "config": {
         "policies": []
       }
     },
     {
       "method": "POST",
-      "path": "/messages",
-      "handler": "message.create",
+      "path": "/conversations",
+      "handler": "conversation.create",
       "config": {
         "policies": []
       }

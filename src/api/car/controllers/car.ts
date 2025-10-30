@@ -220,12 +220,18 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
   async create(ctx) {
     const user = ctx.state.user
 
+    console.log('🔍 Car creation - User from JWT:', { userId: user?.id, username: user?.username })
+    console.log('📝 Car creation - Request body before:', JSON.stringify(ctx.request.body.data, null, 2))
+
     if (!user) {
       return ctx.unauthorized('You must be logged in to create a car listing')
     }
 
     // Set the seller to the authenticated user
     ctx.request.body.data.seller = user.id
+    
+    console.log('🎯 Car creation - Seller set to:', user.id)
+    console.log('📝 Car creation - Request body after:', JSON.stringify(ctx.request.body.data, null, 2))
 
     // Validate and set status
     const validStatuses = ['available', 'sold', 'reserved']
@@ -242,6 +248,11 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
         images: true,
         seller: true
       }
+    })
+
+    console.log('✅ Car created - Entity seller:', { 
+      sellerId: (entity as any).seller?.id, 
+      sellerUsername: (entity as any).seller?.username 
     })
 
     const sanitizedResults = await this.sanitizeOutput(entity, ctx)

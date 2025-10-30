@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conversations",
+  "info": {
+    "singularName": "conversation",
+    "pluralName": "conversations",
+    "displayName": "Conversation",
+    "description": "Chat conversations between users about specific cars"
+  },
+  "options": {
+    "draftAndPublish": false,
+    "comment": ""
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "participants": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "plugin::users-permissions.user"
+    },
+    "car": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::car.car",
+      "inversedBy": "conversations"
+    },
+    "lastMessage": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::message.message"
+    },
+    "lastActivity": {
+      "type": "datetime",
+      "default": null
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "messages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::message.message",
+      "mappedBy": "conversation"
+    }
+  }
+}

@@ -39,6 +39,17 @@
     "isRead": {
       "type": "boolean",
       "default": false
+    },
+    "conversation": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::conversation.conversation",
+      "inversedBy": "messages"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["text", "image", "system"],
+      "default": "text"
     }
   }
 }

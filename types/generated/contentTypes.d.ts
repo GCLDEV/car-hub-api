@@ -461,6 +461,10 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required;
     cityState: Schema.Attribute.String & Schema.Attribute.Required;
     color: Schema.Attribute.String;
+    conversations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::conversation.conversation'
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -546,6 +550,45 @@ export interface ApiCarCar extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiConversationConversation
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'conversations';
+  info: {
+    description: 'Chat conversations between users about specific cars';
+    displayName: 'Conversation';
+    pluralName: 'conversations';
+    singularName: 'conversation';
+  };
+  options: {
+    comment: '';
+    draftAndPublish: false;
+  };
+  attributes: {
+    car: Schema.Attribute.Relation<'manyToOne', 'api::car.car'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    lastActivity: Schema.Attribute.DateTime;
+    lastMessage: Schema.Attribute.Relation<'oneToOne', 'api::message.message'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::conversation.conversation'
+    > &
+      Schema.Attribute.Private;
+    messages: Schema.Attribute.Relation<'oneToMany', 'api::message.message'>;
+    participants: Schema.Attribute.Relation<
+      'manyToMany',
+      'plugin::users-permissions.user'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiFavoriteFavorite extends Struct.CollectionTypeSchema {
   collectionName: 'favorites';
   info: {
@@ -599,6 +642,10 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 2000;
       }>;
+    conversation: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::conversation.conversation'
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -618,6 +665,8 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
       'manyToOne',
       'plugin::users-permissions.user'
     >;
+    type: Schema.Attribute.Enumeration<['text', 'image', 'system']> &
+      Schema.Attribute.DefaultTo<'text'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1150,6 +1199,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::car.car': ApiCarCar;
+      'api::conversation.conversation': ApiConversationConversation;
       'api::favorite.favorite': ApiFavoriteFavorite;
       'api::message.message': ApiMessageMessage;
       'plugin::content-releases.release': PluginContentReleasesRelease;

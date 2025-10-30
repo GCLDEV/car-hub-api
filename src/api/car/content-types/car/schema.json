@@ -149,6 +149,12 @@
       "relation": "oneToMany",
       "target": "api::message.message",
       "mappedBy": "car"
+    },
+    "conversations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::conversation.conversation",
+      "mappedBy": "car"
     }
   }
 }
