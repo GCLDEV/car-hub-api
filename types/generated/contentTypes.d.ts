@@ -1079,14 +1079,9 @@ export interface PluginUsersPermissionsUser
   };
   options: {
     draftAndPublish: false;
-    timestamps: true;
   };
   attributes: {
     avatar: Schema.Attribute.Media<'images'>;
-    bio: Schema.Attribute.Text &
-      Schema.Attribute.SetMinMaxLength<{
-        maxLength: 500;
-      }>;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     cars: Schema.Attribute.Relation<'oneToMany', 'api::car.car'>;
     cityState: Schema.Attribute.String;
@@ -1095,7 +1090,6 @@ export interface PluginUsersPermissionsUser
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    dealerInfo: Schema.Attribute.JSON;
     email: Schema.Attribute.Email &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
@@ -1117,7 +1111,6 @@ export interface PluginUsersPermissionsUser
         minLength: 6;
       }>;
     phone: Schema.Attribute.String;
-    preferences: Schema.Attribute.JSON;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     receivedMessages: Schema.Attribute.Relation<
@@ -1133,7 +1126,6 @@ export interface PluginUsersPermissionsUser
       'oneToMany',
       'api::message.message'
     >;
-    statistics: Schema.Attribute.JSON;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

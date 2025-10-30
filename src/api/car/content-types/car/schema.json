@@ -44,17 +44,41 @@
     },
     "fuelType": {
       "type": "enumeration",
-      "enum": ["Gasoline", "Ethanol", "Flex", "Diesel", "CNG", "Hybrid", "Electric"],
+      "enum": [
+        "Gasoline",
+        "Ethanol",
+        "Flex",
+        "Diesel",
+        "CNG",
+        "Hybrid",
+        "Electric"
+      ],
       "required": false
     },
     "transmission": {
       "type": "enumeration",
-      "enum": ["Manual", "Automatic", "CVT", "Automated"],
+      "enum": [
+        "Manual",
+        "Automatic",
+        "CVT",
+        "Automated"
+      ],
       "required": false
     },
     "category": {
       "type": "enumeration",
-      "enum": ["Sedan", "Hatchback", "SUV", "Pickup", "Wagon", "Coupe", "Conversível", "Minivan", "Crossover", "Compact"],
+      "enum": [
+        "Sedan",
+        "Hatchback",
+        "SUV",
+        "Pickup",
+        "Wagon",
+        "Coupe",
+        "Conversível",
+        "Minivan",
+        "Crossover",
+        "Compact"
+      ],
       "required": true
     },
     "color": {
@@ -69,7 +93,9 @@
       "type": "media",
       "multiple": true,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "location": {
       "type": "string",
@@ -95,7 +121,7 @@
       "max": 5
     },
     "seats": {
-      "type": "integer", 
+      "type": "integer",
       "required": false,
       "min": 2,
       "max": 8

@@ -9,9 +9,9 @@
     "displayName": "User"
   },
   "options": {
-    "draftAndPublish": false,
-    "timestamps": true
+    "draftAndPublish": false
   },
+  "pluginOptions": {},
   "attributes": {
     "username": {
       "type": "string",
@@ -74,7 +74,9 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "phone": {
       "type": "string"
@@ -85,22 +87,9 @@
     "cityState": {
       "type": "string"
     },
-    "bio": {
-      "type": "text",
-      "maxLength": 500
-    },
     "isDealer": {
       "type": "boolean",
       "default": false
-    },
-    "dealerInfo": {
-      "type": "json"
-    },
-    "preferences": {
-      "type": "json"
-    },
-    "statistics": {
-      "type": "json"
     },
     "cars": {
       "type": "relation",

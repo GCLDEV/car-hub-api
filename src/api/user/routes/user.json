@@ -1,0 +1,22 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/users/me",
+      "handler": "user.me",
+      "config": {
+        "policies": [],
+        "middlewares": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/users/me",
+      "handler": "user.updateMe",
+      "config": {
+        "policies": [],
+        "middlewares": []
+      }
+    }
+  ]
+}
