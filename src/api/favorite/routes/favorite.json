@@ -5,7 +5,8 @@
       "path": "/favorites",
       "handler": "favorite.find",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -13,7 +14,8 @@
       "path": "/favorites",
       "handler": "favorite.create",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -21,7 +23,8 @@
       "path": "/favorites/:id",
       "handler": "favorite.delete",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -29,7 +32,8 @@
       "path": "/favorites/by-car/:carId",
       "handler": "favorite.removeByCarId",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     }
   ]

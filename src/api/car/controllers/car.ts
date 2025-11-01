@@ -30,7 +30,7 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
     try {
       // Extract query parameters
       const { query } = ctx
-      const user = ctx.state.user // Get authenticated user
+      const user = ctx.state.user // Get authenticated user (can be null)
       
       // Ensure we always show available cars by default unless explicitly overridden
       const filters = query.filters || {}

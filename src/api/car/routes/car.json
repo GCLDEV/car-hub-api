@@ -5,7 +5,8 @@
       "path": "/cars",
       "handler": "car.find",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -13,7 +14,8 @@
       "path": "/cars/search",
       "handler": "car.search",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -21,7 +23,8 @@
       "path": "/cars/me",
       "handler": "car.findUserCars",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -29,7 +32,8 @@
       "path": "/cars/:id",
       "handler": "car.findOne",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -37,7 +41,8 @@
       "path": "/cars",
       "handler": "car.create",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -45,7 +50,8 @@
       "path": "/cars/:id",
       "handler": "car.update",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -53,7 +59,8 @@
       "path": "/cars/:id",
       "handler": "car.delete",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     }
   ]
