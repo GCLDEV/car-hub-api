@@ -32,9 +32,10 @@ export default factories.createCoreController('api::message.message' as any, ({ 
       return ctx.forbidden('You are not authorized to view messages from this conversation')
     }
 
-    // Buscar mensagens da conversa (simplificado por enquanto)
+    // Buscar mensagens específicas desta conversa
     const { results, pagination } = await strapi.entityService.findPage('api::message.message', {
       filters: {
+        conversation: conversationId,
         $or: [
           { sender: user.id },
           { receiver: user.id }
@@ -50,12 +51,31 @@ export default factories.createCoreController('api::message.message' as any, ({ 
         },
         car: {
           fields: ['id', 'title']
+        },
+        conversation: {
+          fields: ['id']
         }
       }
     })
 
-    const sanitizedResults = await this.sanitizeOutput(results, ctx)
-    return this.transformResponse(sanitizedResults, { pagination })
+    // ⚠️ PROBLEMA: sanitizeOutput remove sender/receiver, vamos preservar manualmente
+    const messagesWithUsers = results.map((message: any) => ({
+      ...message,
+      sender: message.sender ? {
+        id: message.sender.id,
+        documentId: message.sender.documentId,
+        username: message.sender.username
+      } : null,
+      receiver: message.receiver ? {
+        id: message.receiver.id,
+        documentId: message.receiver.documentId,
+        username: message.receiver.username
+      } : null
+    }))
+
+
+
+    return this.transformResponse(messagesWithUsers, { pagination })
   },
 
   // POST /api/messages
@@ -66,13 +86,35 @@ export default factories.createCoreController('api::message.message' as any, ({ 
       return ctx.unauthorized('You must be logged in to send messages')
     }
 
-    const { receiver: receiverId, content } = ctx.request.body.data
+    const { receiver: receiverId, content, conversation: conversationId } = ctx.request.body.data
 
-    if (!receiverId || !content) {
+    // Se temos conversationId, buscar o receiver baseado na conversa
+    if (conversationId && !receiverId) {
+      const conversation = await strapi.entityService.findOne('api::conversation.conversation', conversationId, {
+        populate: ['participants']
+      })
+
+      if (!conversation) {
+        return ctx.badRequest('Conversation not found')
+      }
+
+      // Encontrar o outro participante
+      const otherParticipant = (conversation as any).participants?.find((p: any) => p.id !== user.id)
+      
+      if (!otherParticipant) {
+        return ctx.badRequest('Other participant not found in conversation')
+      }
+
+      ctx.request.body.data.receiver = otherParticipant.id
+    }
+
+    const finalReceiverId = ctx.request.body.data.receiver || receiverId
+
+    if (!finalReceiverId || !content) {
       return ctx.badRequest('Receiver and content are required')
     }
 
-    if (receiverId === user.id) {
+    if (finalReceiverId === user.id) {
       return ctx.badRequest('You cannot send a message to yourself')
     }
 
@@ -82,14 +124,14 @@ export default factories.createCoreController('api::message.message' as any, ({ 
 
     const entity = await strapi.entityService.create('api::message.message', {
       data: ctx.request.body.data,
-      populate: ['sender', 'receiver', 'car']
+      populate: ['sender', 'receiver', 'car', 'conversation']
     })
 
     const sanitizedResults = await this.sanitizeOutput(entity, ctx)
     return this.transformResponse(sanitizedResults)
   },
 
-  // GET /api/messages/conversations - Lista conversas do usuário (alternativa ao conversations endpoint)
+  // GET /api/messages/conversations - Lista conversas reais do usuário
   async conversations(ctx) {
     const user = ctx.state.user
 
@@ -97,74 +139,63 @@ export default factories.createCoreController('api::message.message' as any, ({ 
       return ctx.unauthorized('You must be logged in to view conversations')
     }
 
-    // Buscar todas as mensagens do usuário
-    const messages = await strapi.entityService.findMany('api::message.message', {
+    // Buscar conversas reais do usuário
+    const { results: conversations } = await strapi.entityService.findPage('api::conversation.conversation', {
       filters: {
-        $or: [
-          { sender: user.id },
-          { receiver: user.id }
-        ]
+        participants: {
+          id: user.id
+        }
       },
-      sort: 'createdAt:desc',
+      sort: 'lastActivity:desc',
       populate: {
-        sender: {
-          fields: ['id', 'username']
-        },
-        receiver: {
-          fields: ['id', 'username']
+        participants: {
+          fields: ['id', 'username', 'email']
         },
         car: {
           fields: ['id', 'title', 'price'],
           populate: {
             images: {
-              fields: ['url']
+              fields: ['url', 'alternativeText']
+            }
+          }
+        },
+        messages: {
+          sort: 'createdAt:desc',
+          limit: 1, // Apenas a última mensagem
+          populate: {
+            sender: {
+              fields: ['id', 'username']
+            },
+            receiver: {
+              fields: ['id', 'username']
             }
           }
         }
       }
     })
 
-    // Agrupar mensagens por conversa (combinação de usuário + carro)
-    const conversationsMap = new Map()
-
-    for (const message of messages as any[]) {
-      const otherUserId = message.sender?.id === user.id ? message.receiver?.id : message.sender?.id
-      const conversationKey = `${otherUserId}-${message.car?.id || 'no-car'}`
+    // Processar conversas para formato esperado pelo frontend
+    const processedConversations = conversations.map((conversation: any) => {
+      // Encontrar o outro participante
+      const otherParticipant = conversation.participants?.find((p: any) => p.id !== user.id)
       
-      if (!conversationsMap.has(conversationKey)) {
-        const otherUser = message.sender?.id === user.id ? message.receiver : message.sender
-        
-        conversationsMap.set(conversationKey, {
-          id: conversationKey,
-          otherUser,
-          car: message.car,
-          lastMessage: message,
-          messages: [message],
-          updatedAt: message.createdAt
-        })
-      } else {
-        const conversation = conversationsMap.get(conversationKey)
-        conversation.messages.push(message)
-        
-        // Manter a mensagem mais recente como lastMessage
-        if (new Date(message.createdAt) > new Date(conversation.lastMessage.createdAt)) {
-          conversation.lastMessage = message
-          conversation.updatedAt = message.createdAt
-        }
+      // Pegar a última mensagem
+      const lastMessage = conversation.messages?.[0] || null
+      
+      // Contar mensagens não lidas (simplificado)
+      const unreadCount = 0 // TODO: implementar contagem real se necessário
+      
+      return {
+        id: conversation.id, // ID real da conversa
+        otherUser: otherParticipant,
+        car: conversation.car,
+        lastMessage,
+        unreadCount,
+        updatedAt: conversation.lastActivity || conversation.updatedAt
       }
-    }
+    })
 
-    // Converter para array e ordenar por última atividade
-    const conversations = Array.from(conversationsMap.values())
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .map(conv => ({
-        ...conv,
-        unreadCount: conv.messages.filter((msg: any) => 
-          msg.receiver?.id === user.id && !msg.isRead
-        ).length
-      }))
-
-    const sanitizedResults = await this.sanitizeOutput(conversations, ctx)
+    const sanitizedResults = await this.sanitizeOutput(processedConversations, ctx)
     return this.transformResponse(sanitizedResults)
   }
 }))

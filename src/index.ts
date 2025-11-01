@@ -4,7 +4,6 @@
 process.on('uncaughtException', (error: any) => {
   if (error.code === 'EPERM' && error.syscall === 'unlink') {
     console.warn('⚠️ Erro EPERM capturado globalmente (Windows):', error.path);
-    console.log('✅ Continuando execução...');
     return; // Não encerrar o processo
   }
   
@@ -78,7 +77,6 @@ async function setupRolesAndPermissions(strapi) {
       await setRolePermissions(strapi, authenticatedRole.id, authenticatedPermissions);
     }
 
-    console.log('✅ Roles and permissions have been set up successfully');
   } catch (error) {
     console.error('❌ Error setting up roles and permissions:', error);
   }
