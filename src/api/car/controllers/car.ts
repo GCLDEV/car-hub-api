@@ -30,6 +30,7 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
     try {
       // Extract query parameters
       const { query } = ctx
+      const user = ctx.state.user // Get authenticated user
       
       // Ensure we always show available cars by default unless explicitly overridden
       const filters = query.filters || {}
@@ -38,6 +39,18 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
           status: 'available',
           ...filters
         }
+      }
+
+      // 🚫 EXCLUDE own cars when user is authenticated
+      if (user?.id) {
+        const currentFilters = query.filters || {}
+        query.filters = Object.assign({}, currentFilters, {
+          seller: {
+            id: {
+              $ne: user.id // Exclude cars where seller.id != current user.id
+            }
+          }
+        })
       }
 
       // Use Strapi's entityService to find cars with the modified query
@@ -68,6 +81,7 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
   // GET /api/cars/search - Custom search endpoint with advanced filters
   async search(ctx) {
     const { query } = ctx
+    const user = ctx.state.user // Get authenticated user
 
     try {
       // Extract search parameters
@@ -105,6 +119,15 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
       // Build advanced filters object
       const filters: any = {
         status: 'available' // Always filter available cars
+      }
+
+      // 🚫 EXCLUDE own cars when user is authenticated
+      if (user?.id) {
+        filters.seller = {
+          id: {
+            $ne: user.id // Exclude cars where seller.id != current user.id
+          }
+        }
       }
 
       // General text search across multiple fields
