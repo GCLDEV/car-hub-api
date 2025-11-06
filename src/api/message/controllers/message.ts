@@ -63,6 +63,9 @@ export default factories.createCoreController('api::message.message' as any, ({ 
     // ⚠️ PROBLEMA: sanitizeOutput remove sender/receiver, vamos preservar manualmente
     const messagesWithUsers = results.map((message: any) => ({
       ...message,
+      // Garantir que senderId/receiverId estejam disponíveis
+      senderId: message.sender?.id || message.senderId,
+      receiverId: message.receiver?.id || message.receiverId,
       sender: message.sender ? {
         id: message.sender.id,
         documentId: message.sender.documentId,
