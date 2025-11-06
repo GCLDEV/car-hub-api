@@ -96,8 +96,28 @@ export default factories.createCoreController('api::conversation.conversation' a
       return ctx.forbidden('You are not authorized to view this conversation')
     }
 
-    const sanitizedResults = await this.sanitizeOutput(entity, ctx)
-    return this.transformResponse(sanitizedResults)
+    // ⚠️ PROBLEMA: sanitizeOutput remove participants, vamos preservar manualmente
+    const otherParticipant = (entity as any).participants?.find((p: any) => p.id !== user.id)
+    
+    const conversationWithParticipants = {
+      ...(entity as any),
+      participants: (entity as any).participants?.map((p: any) => ({
+        id: p.id,
+        documentId: p.documentId,
+        username: p.username,
+        email: p.email
+      })),
+      otherUser: otherParticipant ? {
+        id: otherParticipant.id,
+        documentId: otherParticipant.documentId,
+        username: otherParticipant.username,
+        email: otherParticipant.email
+      } : null
+    }
+
+
+
+    return this.transformResponse(conversationWithParticipants)
   },
 
   // POST /api/conversations - Criar ou encontrar conversa existente
@@ -117,22 +137,36 @@ export default factories.createCoreController('api::conversation.conversation' a
       return ctx.badRequest('You cannot create a conversation with yourself')
     }
 
+    // Verificar se o participantId é um ID válido (não pode começar com 'unknown-')
+    if (participantId.startsWith('unknown-')) {
+      return ctx.badRequest('Invalid participant ID. The car seller information is not available.')
+    }
+
+    // Verificar se o participante existe na base de dados
+    const participant = await strapi.db.query('plugin::users-permissions.user').findOne({
+      where: { id: participantId }
+    })
+
+    if (!participant) {
+      return ctx.badRequest(`Participant with ID ${participantId} not found`)
+    }
+
     // Verificar se já existe uma conversa entre esses usuários para este carro
-    const existingConversation = await strapi.db.query('api::conversation.conversation').findOne({
+    const existingConversations = await strapi.db.query('api::conversation.conversation').findMany({
       where: {
-        car: carId,
-        participants: {
-          $and: [
-            { id: user.id },
-            { id: participantId }
-          ]
-        }
+        car: carId
       },
       populate: {
         participants: true,
         car: true,
         lastMessage: true
       }
+    })
+
+    // Filtrar manualmente para encontrar conversa com ambos os participantes
+    const existingConversation = existingConversations.find((conv: any) => {
+      const participantIds = conv.participants?.map((p: any) => p.id) || []
+      return participantIds.includes(user.id) && participantIds.includes(parseInt(participantId))
     })
 
     if (existingConversation) {

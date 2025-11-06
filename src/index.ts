@@ -4,7 +4,6 @@
 process.on('uncaughtException', (error: any) => {
   if (error.code === 'EPERM' && error.syscall === 'unlink') {
     console.warn('⚠️ Erro EPERM capturado globalmente (Windows):', error.path);
-    console.log('✅ Continuando execução...');
     return; // Não encerrar o processo
   }
   
@@ -30,6 +29,7 @@ async function setupRolesAndPermissions(strapi) {
         // Car permissions - read only
         { action: 'api::car.car.find' },
         { action: 'api::car.car.findOne' },
+        { action: 'api::car.car.search' }, // Allow public search
         
         // Auth permissions
         { action: 'plugin::users-permissions.auth.callback' },
@@ -55,6 +55,8 @@ async function setupRolesAndPermissions(strapi) {
         { action: 'api::car.car.create' },
         { action: 'api::car.car.update' },
         { action: 'api::car.car.delete' },
+        { action: 'api::car.car.search' },       // Custom search endpoint
+        { action: 'api::car.car.findUserCars' }, // Custom user cars endpoint
 
         // Favorite permissions - full CRUD for own favorites
         { action: 'api::favorite.favorite.find' },
@@ -64,6 +66,12 @@ async function setupRolesAndPermissions(strapi) {
         // Message permissions - full CRUD for own messages
         { action: 'api::message.message.find' },
         { action: 'api::message.message.create' },
+        { action: 'api::message.message.conversations' }, // Custom conversations endpoint
+
+        // Conversation permissions
+        { action: 'api::conversation.conversation.find' },
+        { action: 'api::conversation.conversation.findOne' },
+        { action: 'api::conversation.conversation.create' },
 
         // User permissions
         { action: 'plugin::users-permissions.user.me' },
@@ -78,27 +86,49 @@ async function setupRolesAndPermissions(strapi) {
       await setRolePermissions(strapi, authenticatedRole.id, authenticatedPermissions);
     }
 
-    console.log('✅ Roles and permissions have been set up successfully');
   } catch (error) {
     console.error('❌ Error setting up roles and permissions:', error);
   }
 }
 
 async function setRolePermissions(strapi, roleId, permissions) {
-  // Clear existing permissions for this role
-  await strapi.query('plugin::users-permissions.permission').deleteMany({
-    where: { role: roleId },
-  });
-
-  // Create new permissions
-  for (const permission of permissions) {
-    await strapi.query('plugin::users-permissions.permission').create({
-      data: {
-        ...permission,
-        role: roleId,
-        enabled: true,
-      },
+  try {
+    // Get existing permissions for this role
+    const existingPermissions = await strapi.query('plugin::users-permissions.permission').findMany({
+      where: { role: roleId },
     });
+
+    // Create a map of existing permissions for quick lookup
+    const existingActionsMap = new Map();
+    existingPermissions.forEach(perm => {
+      existingActionsMap.set(perm.action, perm);
+    });
+
+    // Create or update permissions
+    for (const permission of permissions) {
+      const existingPerm = existingActionsMap.get(permission.action);
+      
+      if (existingPerm) {
+        // Update existing permission if it's disabled
+        if (!existingPerm.enabled) {
+          await strapi.query('plugin::users-permissions.permission').update({
+            where: { id: existingPerm.id },
+            data: { enabled: true }
+          });
+        }
+      } else {
+        // Create new permission
+        await strapi.query('plugin::users-permissions.permission').create({
+          data: {
+            ...permission,
+            role: roleId,
+            enabled: true,
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error setting role permissions:', error);
   }
 }
 
@@ -121,5 +151,14 @@ export default {
   async bootstrap({ strapi }) {
     // Set up roles and permissions
     await setupRolesAndPermissions(strapi);
+
+    // 🔌 Inicializar WebSocket
+    try {
+      const socketExtension = require('./extensions/socket').default;
+      socketExtension({ strapi }).initialize();
+      console.log('✅ WebSocket inicializado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao inicializar WebSocket:', error);
+    }
   },
 };

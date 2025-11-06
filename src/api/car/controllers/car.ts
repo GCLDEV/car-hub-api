@@ -30,6 +30,7 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
     try {
       // Extract query parameters
       const { query } = ctx
+      const user = ctx.state.user // Get authenticated user (can be null)
       
       // Ensure we always show available cars by default unless explicitly overridden
       const filters = query.filters || {}
@@ -38,6 +39,18 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
           status: 'available',
           ...filters
         }
+      }
+
+      // 🚫 EXCLUDE own cars when user is authenticated
+      if (user?.id) {
+        const currentFilters = query.filters || {}
+        query.filters = Object.assign({}, currentFilters, {
+          seller: {
+            id: {
+              $ne: user.id // Exclude cars where seller.id != current user.id
+            }
+          }
+        })
       }
 
       // Use Strapi's entityService to find cars with the modified query
@@ -68,6 +81,7 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
   // GET /api/cars/search - Custom search endpoint with advanced filters
   async search(ctx) {
     const { query } = ctx
+    const user = ctx.state.user // Get authenticated user
 
     try {
       // Extract search parameters
@@ -105,6 +119,15 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
       // Build advanced filters object
       const filters: any = {
         status: 'available' // Always filter available cars
+      }
+
+      // 🚫 EXCLUDE own cars when user is authenticated
+      if (user?.id) {
+        filters.seller = {
+          id: {
+            $ne: user.id // Exclude cars where seller.id != current user.id
+          }
+        }
       }
 
       // General text search across multiple fields
@@ -207,21 +230,32 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
     const entity = await strapi.entityService.findOne('api::car.car', id, {
       populate: {
         images: true,
-        seller: true
+        seller: {
+          fields: ['id', 'username', 'email', 'name']
+        }
       }
     })
 
-    const sanitizedResults = await this.sanitizeOutput(entity, ctx)
+    // ⚠️ PROBLEMA IDENTIFICADO: sanitizeOutput remove o seller por questões de permissão
+    // Vamos preservar o seller manualmente
+    const result = {
+      ...(entity as any),
+      seller: (entity as any)?.seller ? {
+        id: (entity as any).seller.id,
+        documentId: (entity as any).seller.documentId,
+        username: (entity as any).seller.username,
+        // Não incluir email por segurança em produção
+      } : null
+    }
 
-    return this.transformResponse(sanitizedResults)
+    return this.transformResponse(result)
   },
 
   // POST /api/cars
   async create(ctx) {
     const user = ctx.state.user
 
-    console.log('🔍 Car creation - User from JWT:', { userId: user?.id, username: user?.username })
-    console.log('📝 Car creation - Request body before:', JSON.stringify(ctx.request.body.data, null, 2))
+
 
     if (!user) {
       return ctx.unauthorized('You must be logged in to create a car listing')
@@ -229,9 +263,6 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
 
     // Set the seller to the authenticated user
     ctx.request.body.data.seller = user.id
-    
-    console.log('🎯 Car creation - Seller set to:', user.id)
-    console.log('📝 Car creation - Request body after:', JSON.stringify(ctx.request.body.data, null, 2))
 
     // Validate and set status
     const validStatuses = ['available', 'sold', 'reserved']
@@ -250,10 +281,7 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
       }
     })
 
-    console.log('✅ Car created - Entity seller:', { 
-      sellerId: (entity as any).seller?.id, 
-      sellerUsername: (entity as any).seller?.username 
-    })
+
 
     const sanitizedResults = await this.sanitizeOutput(entity, ctx)
 
@@ -287,16 +315,12 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
     delete ctx.request.body.data.views
 
     // Debug: Log received data
-    console.log('📝 Dados recebidos para update:', JSON.stringify(ctx.request.body.data, null, 2))
-
-    // Force status to valid value if provided
+    // Validate status if provided
     if (ctx.request.body.data.status) {
       const validStatuses = ['available', 'sold', 'reserved']
       if (!validStatuses.includes(ctx.request.body.data.status)) {
-        console.log('⚠️ Status inválido recebido:', ctx.request.body.data.status)
         ctx.request.body.data.status = 'available' // Force valid value instead of error
       }
-      console.log('✅ Status final:', ctx.request.body.data.status)
     }
 
     const entity = await strapi.entityService.update('api::car.car', id, {
@@ -349,8 +373,6 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
       return ctx.unauthorized('You must be authenticated to view your cars')
     }
 
-    console.log('🔍 Buscando carros do usuário:', user.id)
-
     try {
       const entities = await strapi.entityService.findMany('api::car.car', {
         filters: {
@@ -361,8 +383,6 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
         },
         sort: { createdAt: 'desc' }
       })
-
-      console.log('✅ Carros encontrados:', entities?.length || 0)
 
       const sanitizedResults = await this.sanitizeOutput(entities, ctx)
       return this.transformResponse(sanitizedResults)

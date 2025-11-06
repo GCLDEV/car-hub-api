@@ -5,7 +5,8 @@
       "path": "/conversations",
       "handler": "conversation.find",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -13,7 +14,8 @@
       "path": "/conversations/:id",
       "handler": "conversation.findOne",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     },
     {
@@ -21,7 +23,8 @@
       "path": "/conversations",
       "handler": "conversation.create",
       "config": {
-        "policies": []
+        "policies": [],
+        "middlewares": []
       }
     }
   ]
