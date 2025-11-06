@@ -657,6 +657,7 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    readAt: Schema.Attribute.DateTime;
     receiver: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'

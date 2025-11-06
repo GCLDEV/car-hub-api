@@ -17,7 +17,7 @@ interface AuthenticatedSocket {
 export default ({ strapi }) => {
   return {
     initialize() {
-      console.log('🔌 Inicializando WebSocket extension...')
+
       
       const server = strapi.server.httpServer
       
@@ -35,7 +35,7 @@ export default ({ strapi }) => {
           const token = socket.handshake.auth.token
           
           if (!token) {
-            console.log('❌ Token não fornecido no WebSocket')
+
             return next(new Error('Authentication error'))
           }
 
@@ -45,17 +45,17 @@ export default ({ strapi }) => {
           const user = await strapi.entityService.findOne('plugin::users-permissions.user', id)
           
           if (!user) {
-            console.log('❌ Usuário não encontrado no WebSocket')
+
             return next(new Error('User not found'))
           }
 
           ;(socket as any).userId = user.id
           ;(socket as any).user = user
-          console.log(`✅ Usuário ${user.username} (${user.id}) conectado ao WebSocket`)
+
           
           next()
         } catch (error) {
-          console.log('❌ Erro de autenticação WebSocket:', error.message)
+
           next(new Error('Authentication error'))
         }
       })
@@ -63,18 +63,18 @@ export default ({ strapi }) => {
       // Gerenciar conexões
       io.on('connection', (socket) => {
         const authSocket = socket as any
-        console.log(`🔌 Cliente conectado: ${authSocket.user.username} (${authSocket.userId})`)
+
 
         // Entrar em uma conversa
         socket.on('joinConversation', (conversationId) => {
           socket.join(`conversation-${conversationId}`)
-          console.log(`📥 Usuário ${authSocket.user.username} entrou na conversa ${conversationId}`)
+
         })
 
         // Sair de uma conversa
         socket.on('leaveConversation', (conversationId) => {
           socket.leave(`conversation-${conversationId}`)
-          console.log(`📤 Usuário ${authSocket.user.username} saiu da conversa ${conversationId}`)
+
         })
 
         // Indicar que está digitando
@@ -105,14 +105,14 @@ export default ({ strapi }) => {
 
         // Desconexão
         socket.on('disconnect', () => {
-          console.log(`🔌 Cliente desconectado: ${authSocket.user.username} (${authSocket.userId})`)
+
         })
       })
 
       // Armazenar referência do io no Strapi para uso em controllers
       strapi.io = io
       
-      console.log('✅ WebSocket extension inicializada com sucesso')
+
     }
   }
 }
