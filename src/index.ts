@@ -151,5 +151,14 @@ export default {
   async bootstrap({ strapi }) {
     // Set up roles and permissions
     await setupRolesAndPermissions(strapi);
+
+    // 🔌 Inicializar WebSocket
+    try {
+      const socketExtension = require('./extensions/socket').default;
+      socketExtension({ strapi }).initialize();
+      console.log('✅ WebSocket inicializado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao inicializar WebSocket:', error);
+    }
   },
 };

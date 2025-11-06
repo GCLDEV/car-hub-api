@@ -4,4 +4,10 @@ export default ({ env }) => ({
   app: {
     keys: env.array('APP_KEYS'),
   },
+  // Configuração personalizada para WebSocket
+  extensions: {
+    socket: {
+      enabled: true,
+    },
+  },
 });
