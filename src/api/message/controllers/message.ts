@@ -3,6 +3,7 @@
  */
 
 import { factories } from '@strapi/strapi'
+import pushNotificationService from '../../../services/pushNotificationService'
 
 export default factories.createCoreController('api::message.message' as any, ({ strapi }) => ({
   // GET /api/messages?conversationId=:id - Messages de uma conversa específica
@@ -188,6 +189,50 @@ export default factories.createCoreController('api::message.message' as any, ({ 
       }
     } catch (error) {
       strapi.log.error('Erro ao emitir mensagem via WebSocket:', error);
+    }
+
+    // 📱 PUSH NOTIFICATION: Enviar notificação para o destinatário
+    try {
+      // Buscar informações do carro para contexto
+      let carTitle = 'um veículo';
+      let isSellerSending = false;
+      
+      if (conversationId) {
+        const conversation = await strapi.entityService.findOne('api::conversation.conversation', conversationId, {
+          populate: ['car']
+        });
+        if ((conversation as any).car) {
+          carTitle = (conversation as any).car.title;
+          // Determinar se é vendedor ou comprador enviando mensagem
+          if ((conversation as any).car.seller === user.id) {
+            isSellerSending = true;
+          }
+        }
+      }
+
+      // Enviar notificação apropriada
+      if (isSellerSending) {
+        // Vendedor enviando mensagem para comprador
+        await pushNotificationService.notifyBuyerNewMessage(
+          finalReceiverId,
+          user.id,
+          carTitle,
+          entity.content
+        );
+      } else {
+        // Comprador enviando mensagem para vendedor
+        await pushNotificationService.notifySellerNewMessage(
+          finalReceiverId,
+          user.id,
+          carTitle,
+          entity.content
+        );
+      }
+
+      console.log('📱 Push notification enviada com sucesso');
+    } catch (error) {
+      console.error('Erro ao enviar push notification:', error);
+      // Não interrompe o fluxo se a notificação falhar
     }
 
     const sanitizedResults = await this.sanitizeOutput(entity, ctx)

@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "push_tokens",
+  "info": {
+    "singularName": "push-token",
+    "pluralName": "push-tokens",
+    "displayName": "Push Token",
+    "description": "Expo push notification tokens for users"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "token": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "deviceType": {
+      "type": "enumeration",
+      "enum": ["ios", "android", "web"],
+      "default": "android"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}
