@@ -674,90 +674,6 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiPushNotificationPushNotification
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'push_notifications';
-  info: {
-    description: 'Push notification history';
-    displayName: 'Push Notification';
-    pluralName: 'push-notifications';
-    singularName: 'push-notification';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    body: Schema.Attribute.Text & Schema.Attribute.Required;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    data: Schema.Attribute.JSON;
-    isRead: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::push-notification.push-notification'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    recipient: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
-    sender: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
-    sentAt: Schema.Attribute.DateTime & Schema.Attribute.DefaultTo<'now'>;
-    title: Schema.Attribute.String & Schema.Attribute.Required;
-    type: Schema.Attribute.Enumeration<
-      ['message_from_buyer', 'message_from_seller']
-    > &
-      Schema.Attribute.Required;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
-export interface ApiPushTokenPushToken extends Struct.CollectionTypeSchema {
-  collectionName: 'push_tokens';
-  info: {
-    description: 'Expo push notification tokens for users';
-    displayName: 'Push Token';
-    pluralName: 'push-tokens';
-    singularName: 'push-token';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    deviceType: Schema.Attribute.Enumeration<['ios', 'android', 'web']> &
-      Schema.Attribute.DefaultTo<'android'>;
-    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::push-token.push-token'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    token: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
-  };
-}
-
 export interface PluginContentReleasesRelease
   extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
@@ -1287,8 +1203,6 @@ declare module '@strapi/strapi' {
       'api::conversation.conversation': ApiConversationConversation;
       'api::favorite.favorite': ApiFavoriteFavorite;
       'api::message.message': ApiMessageMessage;
-      'api::push-notification.push-notification': ApiPushNotificationPushNotification;
-      'api::push-token.push-token': ApiPushTokenPushToken;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
