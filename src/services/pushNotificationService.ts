@@ -12,7 +12,7 @@ interface SendNotificationParams {
   senderId: string;
   title: string;
   body: string;
-  type: 'message_from_buyer' | 'message_from_seller';
+  type: 'message' | 'message_from_buyer' | 'message_from_seller' | 'car_sold';
   data?: NotificationData;
 }
 
@@ -108,17 +108,29 @@ class PushNotificationService {
         return false;
       }
 
+      // Preparar dados da notificação
+      const notificationData = {
+        type,
+        timestamp: Date.now(),
+        ...data
+      };
+
+      console.log('🚀 Enviando push notification:', {
+        recipientId,
+        senderId,
+        title: title.substring(0, 50) + '...',
+        type,
+        data: notificationData,
+        tokenCount: validTokens.length
+      });
+
       // Criar mensagens de push notification seguindo formato oficial
       const messages: ExpoPushMessage[] = validTokens.map(token => ({
         to: token,
         sound: 'default',
         title: title.substring(0, 100), // Limitar título
         body: body.substring(0, 200),   // Limitar corpo
-        data: {
-          type,
-          timestamp: Date.now(),
-          ...data
-        },
+        data: notificationData,
         priority: 'high',
         channelId: 'default',
         // TTL de 24 horas conforme documentação
@@ -146,6 +158,7 @@ class PushNotificationService {
           
           // Log de sucesso
           console.log(`✅ Push notification chunk sent successfully. Chunk size: ${chunk.length}`);
+          console.log('📦 Dados enviados no chunk:', chunk[0]?.data);
         } catch (error: any) {
           console.error('❌ Failed to send push notification chunk after retries:', {
             error: error.message,
@@ -320,47 +333,117 @@ class PushNotificationService {
   /**
    * Envia notificação quando vendedor recebe mensagem de comprador
    */
-  async notifySellerNewMessage(sellerId: string, buyerId: string, carTitle: string, messageContent: string): Promise<boolean> {
+  async notifySellerNewMessage(sellerId: string, buyerId: string, carTitle: string, messageContent: string, conversationId?: string): Promise<boolean> {
+    console.log('📱 notifySellerNewMessage chamada:', {
+      sellerId,
+      buyerId,
+      carTitle,
+      conversationId,
+      hasConversationId: !!conversationId
+    });
+
     const buyer = await strapi.db.query('plugin::users-permissions.user').findOne({
       where: { id: buyerId },
       select: ['username', 'email']
     });
+
+    const notificationData = {
+      buyerId,
+      carTitle,
+      messageContent: messageContent.substring(0, 100),
+      conversationId
+    };
+
+    console.log('📦 Dados da notificação (vendedor):', notificationData);
 
     return this.sendNotification({
       recipientId: sellerId,
       senderId: buyerId,
       title: 'Nova mensagem de comprador',
       body: `${buyer?.username || 'Comprador'} enviou uma mensagem sobre ${carTitle}`,
-      type: 'message_from_buyer',
-      data: {
-        buyerId,
-        carTitle,
-        messageContent: messageContent.substring(0, 100)
-      }
+      type: 'message',
+      data: notificationData
     });
   }
 
   /**
    * Envia notificação quando comprador recebe mensagem de vendedor
    */
-  async notifyBuyerNewMessage(buyerId: string, sellerId: string, carTitle: string, messageContent: string): Promise<boolean> {
+  async notifyBuyerNewMessage(buyerId: string, sellerId: string, carTitle: string, messageContent: string, conversationId?: string): Promise<boolean> {
+    console.log('📱 notifyBuyerNewMessage chamada:', {
+      buyerId,
+      sellerId,
+      carTitle,
+      conversationId,
+      hasConversationId: !!conversationId
+    });
+
     const seller = await strapi.db.query('plugin::users-permissions.user').findOne({
       where: { id: sellerId },
       select: ['username', 'email']
     });
+
+    const notificationData = {
+      sellerId,
+      carTitle,
+      messageContent: messageContent.substring(0, 100),
+      conversationId
+    };
+
+    console.log('📦 Dados da notificação (comprador):', notificationData);
 
     return this.sendNotification({
       recipientId: buyerId,
       senderId: sellerId,
       title: 'Nova mensagem do vendedor',
       body: `${seller?.username || 'Vendedor'} respondeu sobre ${carTitle}`,
-      type: 'message_from_seller',
-      data: {
-        sellerId,
-        carTitle,
-        messageContent: messageContent.substring(0, 100)
-      }
+      type: 'message',
+      data: notificationData
     });
+  }
+
+  /**
+   * Envia notificação quando um veículo é vendido para usuários que enviaram mensagens sobre ele
+   */
+  async notifyCarSold(carId: string, carTitle: string, sellerId: string): Promise<boolean> {
+    try {
+      // Buscar todas as conversas relacionadas a este carro
+      const conversations = await strapi.db.query('api::conversation.conversation').findMany({
+        where: { car: carId },
+        populate: ['buyer', 'seller']
+      });
+
+      if (conversations.length === 0) {
+        console.log(`No conversations found for car ${carId}`);
+        return true;
+      }
+
+      // Extrair todos os compradores únicos que tiveram conversa sobre este carro
+      const interestedBuyerIds = [...new Set(conversations.map(conv => conv.buyer.id))];
+
+      // Enviar notificação para cada comprador interessado
+      const promises = interestedBuyerIds.map(buyerId => {
+        return this.sendNotification({
+          recipientId: buyerId,
+          senderId: sellerId,
+          title: 'Veículo Vendido',
+          body: `O ${carTitle} foi vendido. Continue navegando para encontrar outras opções!`,
+          type: 'car_sold',
+          data: {
+            carId,
+            carTitle
+          }
+        });
+      });
+
+      await Promise.allSettled(promises);
+      console.log(`✅ Car sold notifications sent to ${interestedBuyerIds.length} interested buyers`);
+      
+      return true;
+    } catch (error) {
+      console.error('Error notifying car sold:', error);
+      return false;
+    }
   }
 }
 

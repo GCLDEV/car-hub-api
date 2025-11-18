@@ -10,4 +10,7 @@ export default ({ env }) => ({
       enabled: true,
     },
   },
+  // Allow external hosts for ngrok
+  proxy: true,
+  url: env('PUBLIC_URL', `http://localhost:${env.int('PORT', 1337)}`),
 });

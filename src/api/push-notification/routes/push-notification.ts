@@ -36,5 +36,14 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/push-notifications/test',
+      handler: 'push-notification.sendTestNotification',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

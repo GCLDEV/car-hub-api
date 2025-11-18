@@ -9,11 +9,23 @@ export default {
       const { token, deviceType = 'android' } = ctx.request.body;
       const userId = ctx.state.user?.id;
 
+      console.log('📱 Push token registration request:', { 
+        userId, 
+        token: token?.substring(0, 20) + '...', 
+        deviceType,
+        hasUser: !!ctx.state.user,
+        userFromState: ctx.state.user?.id,
+        headers: ctx.request.headers.authorization ? 'Authorization header present' : 'No auth header',
+        ctxState: Object.keys(ctx.state || {})
+      });
+
       if (!userId) {
+        console.log('❌ User not authenticated in push token registration');
         return ctx.unauthorized('User not authenticated');
       }
 
       if (!token) {
+        console.log('❌ Token is missing in push token registration');
         return ctx.badRequest('Token is required');
       }
 
@@ -89,7 +101,32 @@ export default {
         success: true
       };
     } catch (error) {
-      console.error('Error in findMine push tokens:', error);
+      console.error('Error in unregister push token:', error);
+      ctx.internalServerError('Internal server error');
+    }
+  },
+
+  /**
+   * Endpoint de teste para verificar autenticação
+   */
+  async testAuth(ctx) {
+    try {
+      console.log('🔍 Test auth endpoint called:', {
+        hasUser: !!ctx.state.user,
+        userId: ctx.state.user?.id,
+        username: ctx.state.user?.username,
+        headers: ctx.request.headers.authorization ? 'Auth header present' : 'No auth header',
+        ctxState: Object.keys(ctx.state || {})
+      });
+
+      ctx.body = {
+        authenticated: !!ctx.state.user,
+        userId: ctx.state.user?.id,
+        username: ctx.state.user?.username,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error in test auth:', error);
       ctx.internalServerError('Internal server error');
     }
   }

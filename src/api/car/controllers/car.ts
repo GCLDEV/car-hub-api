@@ -5,6 +5,7 @@
  */
 
 import { factories } from '@strapi/strapi'
+import pushNotificationService from '../../../services/pushNotificationService'
 
 // Helper function to parse sort parameters
 function parseSortParam(sortBy: string): string {
@@ -323,6 +324,11 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
       }
     }
 
+    // Check if status is changing to 'sold' for push notifications
+    const newStatus = ctx.request.body.data?.status
+    const wasAvailable = (existingCar as any).status === 'available'
+    const becomingSold = newStatus === 'sold'
+
     const entity = await strapi.entityService.update('api::car.car', id, {
       data: ctx.request.body.data,
       populate: {
@@ -330,6 +336,21 @@ export default factories.createCoreController('api::car.car', ({ strapi }) => ({
         seller: true
       }
     })
+
+    // 📱 PUSH NOTIFICATION: Notify interested users when car is sold
+    if (wasAvailable && becomingSold) {
+      try {
+        await pushNotificationService.notifyCarSold(
+          id,
+          (entity as any).title,
+          user.id
+        )
+        console.log('📱 Car sold notifications sent successfully')
+      } catch (error) {
+        console.error('Error sending car sold notifications:', error)
+        // Don't interrupt the flow if notification fails
+      }
+    }
 
     const sanitizedResults = await this.sanitizeOutput(entity, ctx)
 

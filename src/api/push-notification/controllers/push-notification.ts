@@ -133,5 +133,41 @@ export default {
       console.error('Error in countUnread notifications:', error);
       ctx.internalServerError('Internal server error');
     }
+  },
+
+  /**
+   * Envia uma notificação de teste para o usuário autenticado
+   */
+  async sendTestNotification(ctx) {
+    try {
+      const userId = ctx.state.user?.id;
+
+      if (!userId) {
+        return ctx.unauthorized('User not authenticated');
+      }
+
+      const pushNotificationService = require('../../../services/pushNotificationService').default;
+
+      const success = await pushNotificationService.sendNotification({
+        recipientId: userId,
+        senderId: userId,
+        title: '🧪 Notificação de Teste',
+        body: 'Esta é uma notificação de teste do Car Hub! Tudo funcionando perfeitamente.',
+        type: 'message_from_seller',
+        data: {
+          test: true,
+          timestamp: Date.now()
+        }
+      });
+
+      ctx.body = {
+        message: success ? 'Test notification sent successfully' : 'Failed to send test notification',
+        success,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error in sendTestNotification:', error);
+      ctx.internalServerError('Internal server error');
+    }
   }
 };

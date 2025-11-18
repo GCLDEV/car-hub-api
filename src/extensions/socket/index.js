@@ -5,18 +5,23 @@ module.exports = ({ strapi }) => ({
    * Inicializa o servidor Socket.IO
    */
   initialize() {
+    console.log('🚀 Inicializando extensão WebSocket...');
+    
     // Obter o servidor HTTP do Strapi
     const server = strapi.server.httpServer;
+    console.log('📡 Servidor HTTP obtido:', !!server);
     
     // Criar instância do Socket.IO
     const io = new Server(server, {
       cors: {
-        origin: ["http://localhost:8081", "exp://192.168.*", "exp://*"],
+        origin: "*", // Temporariamente abrir para debug
         methods: ["GET", "POST"],
         credentials: true
       },
       transports: ['websocket', 'polling']
     });
+    
+    console.log('🔌 Instância Socket.IO criada');
 
     // Armazenar referência do io no Strapi
     strapi.io = io;
@@ -117,6 +122,7 @@ module.exports = ({ strapi }) => ({
       });
     });
 
+    console.log('✅ WebSocket Server inicializado com sucesso!');
     strapi.log.info('🔌 WebSocket Server inicializado com sucesso');
   },
 

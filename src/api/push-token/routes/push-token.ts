@@ -27,5 +27,14 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'GET',
+      path: '/push-tokens/test-auth',
+      handler: 'push-token.testAuth',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

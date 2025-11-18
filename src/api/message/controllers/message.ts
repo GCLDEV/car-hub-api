@@ -39,26 +39,20 @@ export default factories.createCoreController('api::message.message' as any, ({ 
         conversation: conversationId
       },
       sort: 'createdAt:asc',
-      populate: {
-        sender: {
-          fields: ['id', 'username']
-        },
-        receiver: {
-          fields: ['id', 'username']
-        },
-        car: {
-          fields: ['id', 'title']
-        },
-        conversation: {
-          fields: ['id']
-        }
-      }
+      populate: ['sender', 'receiver', 'car', 'conversation']
     })
 
     console.log(`📋 Buscando mensagens da conversa ${conversationId}:`, {
       totalMessages: results.length,
       userId: user.id,
-      messageIds: results.map(msg => msg.id)
+      messageIds: results.map((msg: any) => msg.id),
+      firstMessageData: results[0] ? {
+        id: results[0].id,
+        senderId: results[0].sender?.id,
+        receiverId: results[0].receiver?.id,
+        hasSender: !!results[0].sender,
+        hasReceiver: !!results[0].receiver
+      } : null
     })
 
     // ⚠️ PROBLEMA: sanitizeOutput remove sender/receiver, vamos preservar manualmente
@@ -143,39 +137,45 @@ export default factories.createCoreController('api::message.message' as any, ({ 
     console.log('✅ Mensagem criada com sucesso:', {
       messageId: entity.id,
       content: entity.content,
-      conversationId: (entity as any).conversation?.id
+      conversationId: (entity as any).conversation?.id,
+      senderId: (entity as any).sender?.id,
+      receiverId: (entity as any).receiver?.id,
+      senderObject: (entity as any).sender,
+      receiverObject: (entity as any).receiver,
+      hasPopulatedSender: !!(entity as any).sender,
+      hasPopulatedReceiver: !!(entity as any).receiver,
+      fullEntity: entity
     })
 
     // 🔌 WEBSOCKET: Emitir nova mensagem em tempo real
     try {
-      if ((strapi as any).io && conversationId) {
-        const messagePayload = {
-          id: entity.id,
-          content: entity.content,
-          senderId: user.id,
-          conversationId,
-          createdAt: entity.createdAt,
-          isRead: false,
-          type: entity.type || 'text',
-          sender: {
-            id: user.id,
-            username: user.username
+      if (conversationId) {
+        const io = (strapi as any).io
+        
+        if (io) {
+          const socketData = {
+            id: entity.id,
+            content: entity.content,
+            senderId: user.id,
+            receiverId: finalReceiverId,
+            type: entity.type || 'text',
+            createdAt: entity.createdAt,
+            conversationId: conversationId
           }
-        };
-        
-        // Emitir evento newMessage para todos na sala da conversa
-        (strapi as any).io.to(`conversation-${conversationId}`).emit('newMessage', messagePayload);
-        
-        console.log(`📡 Mensagem emitida via WebSocket para conversa ${conversationId}:`, {
-          messageId: entity.id,
-          content: entity.content.substring(0, 50) + '...',
-          senderId: user.id,
-          roomName: `conversation-${conversationId}`
-        });
-        
-        // Verificar quantos clientes estão na sala
-        const room = (strapi as any).io.sockets.adapter.rooms.get(`conversation-${conversationId}`);
-        console.log(`👥 Clientes na sala conversation-${conversationId}:`, room?.size || 0);
+
+          // Emitir para todos na conversa
+          io.to(`conversation:${conversationId}`).emit('new_message', socketData)
+          
+          console.log('✅ Mensagem emitida via WebSocket:', {
+            conversationId,
+            messageId: entity.id,
+            senderId: user.id,
+            receiverId: finalReceiverId,
+            roomName: `conversation:${conversationId}`
+          })
+        } else {
+          console.log('❌ Socket.IO não encontrado em strapi.io')
+        }
         
         // Atualizar lastActivity da conversa
         await strapi.entityService.update('api::conversation.conversation', conversationId, {
@@ -183,12 +183,12 @@ export default factories.createCoreController('api::message.message' as any, ({ 
             lastActivity: new Date(),
             lastMessage: entity.id
           }
-        });
+        })
       } else {
-        console.log('⚠️ WebSocket não disponível ou conversationId não fornecido');
+        console.log('⚠️ conversationId não fornecido')
       }
     } catch (error) {
-      strapi.log.error('Erro ao emitir mensagem via WebSocket:', error);
+      console.error('❌ Erro ao emitir mensagem via WebSocket:', error)
     }
 
     // 📱 PUSH NOTIFICATION: Enviar notificação para o destinatário
@@ -211,29 +211,47 @@ export default factories.createCoreController('api::message.message' as any, ({ 
       }
 
       // Enviar notificação apropriada
+      console.log('📱 Preparando push notification:', {
+        isSellerSending,
+        finalReceiverId,
+        senderId: user.id,
+        carTitle,
+        conversationId,
+        contentPreview: entity.content.substring(0, 50) + '...'
+      });
+
       if (isSellerSending) {
         // Vendedor enviando mensagem para comprador
         await pushNotificationService.notifyBuyerNewMessage(
           finalReceiverId,
           user.id,
           carTitle,
-          entity.content
+          entity.content,
+          conversationId
         );
+        console.log('📱 Notificação enviada (vendedor -> comprador)');
       } else {
         // Comprador enviando mensagem para vendedor
         await pushNotificationService.notifySellerNewMessage(
           finalReceiverId,
           user.id,
           carTitle,
-          entity.content
+          entity.content,
+          conversationId
         );
+        console.log('📱 Notificação enviada (comprador -> vendedor)');
       }
 
-      console.log('📱 Push notification enviada com sucesso');
+      console.log('✅ Push notification concluída com sucesso');
     } catch (error) {
       console.error('Erro ao enviar push notification:', error);
       // Não interrompe o fluxo se a notificação falhar
     }
+
+    // Retornar a entidade criada com dados populados
+    console.log('🚀 Retornando mensagem criada com populate completo')
+    const sanitizedEntity = await this.sanitizeOutput(entity, ctx)
+    return this.transformResponse(sanitizedEntity)
 
     const sanitizedResults = await this.sanitizeOutput(entity, ctx)
     return this.transformResponse(sanitizedResults)

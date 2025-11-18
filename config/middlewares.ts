@@ -30,7 +30,7 @@ export default [
   {
     name: 'strapi::cors',
     config: {
-      headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+      headers: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'ngrok-skip-browser-warning'],
       origin: [
         'http://localhost:1337',
         'http://localhost:3000',
@@ -39,6 +39,8 @@ export default [
         /^exp:\/\/.*/, // Expo development URLs
         /^https?:\/\/.*\.exp\.direct:.*/, // Expo tunnel URLs
         /^https?:\/\/.*\.ngrok\.io$/, // ngrok URLs
+        /^https?:\/\/.*\.ngrok-free\.app$/, // ngrok free URLs
+        'https://b181d97b5f6f.ngrok-free.app', // Current ngrok URL
       ],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       credentials: true,
