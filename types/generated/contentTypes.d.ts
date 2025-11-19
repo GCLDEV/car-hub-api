@@ -674,6 +674,44 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiPushTokenPushToken extends Struct.CollectionTypeSchema {
+  collectionName: 'push_tokens';
+  info: {
+    description: 'Expo push tokens for users';
+    displayName: 'Push Token';
+    pluralName: 'push-tokens';
+    singularName: 'push-token';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    deviceType: Schema.Attribute.Enumeration<['ios', 'android']> &
+      Schema.Attribute.DefaultTo<'android'>;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::push-token.push-token'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    token: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface PluginContentReleasesRelease
   extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
@@ -1163,6 +1201,10 @@ export interface PluginUsersPermissionsUser
     phone: Schema.Attribute.String;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    pushTokens: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::push-token.push-token'
+    >;
     receivedMessages: Schema.Attribute.Relation<
       'oneToMany',
       'api::message.message'
@@ -1203,6 +1245,7 @@ declare module '@strapi/strapi' {
       'api::conversation.conversation': ApiConversationConversation;
       'api::favorite.favorite': ApiFavoriteFavorite;
       'api::message.message': ApiMessageMessage;
+      'api::push-token.push-token': ApiPushTokenPushToken;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

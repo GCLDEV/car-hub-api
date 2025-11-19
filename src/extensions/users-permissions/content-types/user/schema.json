@@ -114,6 +114,12 @@
       "relation": "oneToMany",
       "target": "api::message.message",
       "mappedBy": "receiver"
+    },
+    "pushTokens": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::push-token.push-token",
+      "mappedBy": "user"
     }
   }
 }

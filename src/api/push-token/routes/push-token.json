@@ -1,0 +1,20 @@
+{
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/push-tokens/register",
+      "handler": "push-token.register",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST", 
+      "path": "/push-tokens/unregister",
+      "handler": "push-token.unregister",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}
