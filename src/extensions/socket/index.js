@@ -5,17 +5,23 @@ module.exports = ({ strapi }) => ({
    * Inicializa o servidor Socket.IO
    */
   initialize() {
+    
+    
     // Obter o servidor HTTP do Strapi
     const server = strapi.server.httpServer;
     
     // Criar instância do Socket.IO
     const io = new Server(server, {
       cors: {
-        origin: ["http://localhost:8081", "exp://192.168.*", "exp://*"],
+        origin: ["http://localhost:8081", "https://a93b9cce742b.ngrok-free.app", "exp://192.168.*", "exp://*"],
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"]
       },
-      transports: ['websocket', 'polling']
+      transports: ['polling', 'websocket'], // Polling primeiro para ngrok
+      allowEIO3: true, // Suporte para versões antigas
+      pingTimeout: 60000, // Aumentado para ngrok
+      pingInterval: 25000 // Aumentado para ngrok
     });
 
     // Armazenar referência do io no Strapi
@@ -53,18 +59,42 @@ module.exports = ({ strapi }) => ({
 
     // Event handlers
     io.on('connection', (socket) => {
-      strapi.log.info(`Nova conexão WebSocket: ${socket.id}`);
+      
+      // Auto-join em salas baseado no ID do usuário (fallback para ngrok)
+      if (socket.user) {
+        socket.join(`user:${socket.user.id}`);
+      }
       
       // Entrar em conversa específica
       socket.on('join_conversation', (conversationId) => {
-        socket.join(`conversation:${conversationId}`);
-        strapi.log.info(`Usuario ${socket.user?.username} entrou na conversa ${conversationId}`);
+        const roomName = `conversation:${conversationId}`;
+        socket.join(roomName);
+        
+        socket.to(roomName).emit('test_room', {
+          message: `Usuario ${socket.user?.username} entrou na sala`,
+          roomName,
+          timestamp: new Date().toISOString()
+        });
+      });
+
+      // FALLBACK: Force join via HTTP endpoint (para contornar problemas de ngrok)
+      socket.on('force_join_conversation', (conversationId) => {
+        const roomName = `conversation:${conversationId}`;
+        socket.join(roomName);
+        
+        // Confirmar entrada enviando resposta
+        socket.emit('joined_conversation', {
+          conversationId,
+          roomName,
+          timestamp: new Date().toISOString(),
+          userCount: socket.adapter.rooms.get(roomName)?.size || 0
+        });
       });
 
       // Sair de conversa
       socket.on('leave_conversation', (conversationId) => {
-        socket.leave(`conversation:${conversationId}`);
-        strapi.log.info(`Usuario ${socket.user?.username} saiu da conversa ${conversationId}`);
+        const roomName = `conversation:${conversationId}`;
+        socket.leave(roomName);
       });
 
       // Indicador de digitação
@@ -72,6 +102,7 @@ module.exports = ({ strapi }) => ({
         socket.to(`conversation:${conversationId}`).emit('user_typing', {
           userId: socket.user?.id,
           username: socket.user?.username,
+          conversationId,
           isTyping: true
         });
       });
@@ -80,6 +111,7 @@ module.exports = ({ strapi }) => ({
         socket.to(`conversation:${conversationId}`).emit('user_typing', {
           userId: socket.user?.id,
           username: socket.user?.username,
+          conversationId,
           isTyping: false
         });
       });

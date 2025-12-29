@@ -33,11 +33,12 @@ export default factories.createCoreController('api::message.message' as any, ({ 
     }
 
     // Buscar mensagens específicas desta conversa
-    const { results, pagination } = await strapi.entityService.findPage('api::message.message', {
+    const results = await strapi.entityService.findMany('api::message.message', {
       filters: {
         conversation: conversationId
       },
       sort: 'createdAt:asc',
+      limit: -1, // Sem limite - buscar TODAS as mensagens
       populate: {
         sender: {
           fields: ['id', 'username']
@@ -54,13 +55,6 @@ export default factories.createCoreController('api::message.message' as any, ({ 
       }
     })
 
-    console.log(`📋 Buscando mensagens da conversa ${conversationId}:`, {
-      totalMessages: results.length,
-      userId: user.id,
-      messageIds: results.map(msg => msg.id)
-    })
-
-    // ⚠️ PROBLEMA: sanitizeOutput remove sender/receiver, vamos preservar manualmente
     const messagesWithUsers = results.map((message: any) => ({
       ...message,
       // Garantir que senderId/receiverId estejam disponíveis
@@ -80,7 +74,7 @@ export default factories.createCoreController('api::message.message' as any, ({ 
 
 
 
-    return this.transformResponse(messagesWithUsers, { pagination })
+    return this.transformResponse(messagesWithUsers)
   },
 
   // POST /api/messages
@@ -127,23 +121,27 @@ export default factories.createCoreController('api::message.message' as any, ({ 
     ctx.request.body.data.sender = user.id
     ctx.request.body.data.isRead = false
 
-    console.log('💾 Criando mensagem com dados:', {
-      content: ctx.request.body.data.content,
-      senderId: ctx.request.body.data.sender,
-      receiverId: ctx.request.body.data.receiver,
-      conversationId: ctx.request.body.data.conversation
-    })
+
 
     const entity = await strapi.entityService.create('api::message.message', {
       data: ctx.request.body.data,
-      populate: ['sender', 'receiver', 'car', 'conversation']
+      populate: {
+        sender: {
+          fields: ['id', 'username']
+        },
+        receiver: {
+          fields: ['id', 'username']  
+        },
+        car: {
+          fields: ['id', 'title']
+        },
+        conversation: {
+          fields: ['id']
+        }
+      }
     })
 
-    console.log('✅ Mensagem criada com sucesso:', {
-      messageId: entity.id,
-      content: entity.content,
-      conversationId: (entity as any).conversation?.id
-    })
+
 
     // 🔌 WEBSOCKET: Emitir nova mensagem em tempo real
     try {
@@ -152,6 +150,7 @@ export default factories.createCoreController('api::message.message' as any, ({ 
           id: entity.id,
           content: entity.content,
           senderId: user.id,
+          receiverId: finalReceiverId,
           conversationId,
           createdAt: entity.createdAt,
           isRead: false,
@@ -159,22 +158,29 @@ export default factories.createCoreController('api::message.message' as any, ({ 
           sender: {
             id: user.id,
             username: user.username
+          },
+          receiver: {
+            id: finalReceiverId
           }
         };
         
-        // Emitir evento newMessage para todos na sala da conversa
-        (strapi as any).io.to(`conversation-${conversationId}`).emit('newMessage', messagePayload);
+        // Emitir evento new_message para todos na sala da conversa
+        const roomName = `conversation:${conversationId}`;
         
-        console.log(`📡 Mensagem emitida via WebSocket para conversa ${conversationId}:`, {
-          messageId: entity.id,
-          content: entity.content.substring(0, 50) + '...',
-          senderId: user.id,
-          roomName: `conversation-${conversationId}`
+        // Emitir para a sala (método principal)
+        (strapi as any).io.to(roomName).emit('new_message', messagePayload);
+        
+        // Emitir para todos os sockets como fallback (para teste)
+        (strapi as any).io.emit('new_message_broadcast', {
+          ...messagePayload,
+          broadcastType: 'fallback',
+          originalRoom: roomName
         });
         
-        // Verificar quantos clientes estão na sala
-        const room = (strapi as any).io.sockets.adapter.rooms.get(`conversation-${conversationId}`);
-        console.log(`👥 Clientes na sala conversation-${conversationId}:`, room?.size || 0);
+        // Também emitir para salas individuais dos usuários como fallback
+        (strapi as any).io.to(`user:${finalReceiverId}`).emit('new_message', messagePayload);
+        
+
         
         // Atualizar lastActivity da conversa
         await strapi.entityService.update('api::conversation.conversation', conversationId, {
@@ -184,14 +190,37 @@ export default factories.createCoreController('api::message.message' as any, ({ 
           }
         });
       } else {
-        console.log('⚠️ WebSocket não disponível ou conversationId não fornecido');
+        
       }
     } catch (error) {
       strapi.log.error('Erro ao emitir mensagem via WebSocket:', error);
     }
 
     const sanitizedResults = await this.sanitizeOutput(entity, ctx)
-    return this.transformResponse(sanitizedResults)
+    
+    // Garantir que temos um objeto base para trabalhar
+    const baseResult = typeof sanitizedResults === 'object' && sanitizedResults !== null 
+      ? sanitizedResults 
+      : { id: entity.id, content: entity.content }
+    
+    // Garantir que o resultado inclua os dados essenciais
+    const enhancedResult = Object.assign({}, baseResult, {
+      // Adicionar dados do sender (usuário atual)
+      senderId: user.id,
+      sender: {
+        id: user.id,
+        username: user.username
+      },
+      // Adicionar dados do receiver
+      receiverId: finalReceiverId,
+      receiver: {
+        id: finalReceiverId
+      }
+    }) as any
+    
+
+    
+    return this.transformResponse(enhancedResult)
   },
 
   // GET /api/messages/conversations - Lista conversas reais do usuário
