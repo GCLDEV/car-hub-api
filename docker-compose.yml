@@ -19,7 +19,6 @@ services:
     container_name: car-hub-strapi
     restart: unless-stopped
     environment:
-
       DATABASE_CLIENT: mysql
       DATABASE_HOST: db
       DATABASE_PORT: 3306
@@ -31,6 +30,10 @@ services:
       APP_KEYS: app-key-1,app-key-2,app-key-3,app-key-4
       API_TOKEN_SALT: your-api-token-salt
       NODE_OPTIONS: "--max-old-space-size=512"
+      # Vite/esbuild stability fixes
+      ESBUILD_BINARY_PATH: "/usr/bin/esbuild"
+      VITE_CJS_IGNORE_WARNING: true
+      VITE_LEGACY_DEPS: true
       STRAPI_DISABLE_ADMIN: false
     volumes:
       - ./config:/opt/app/config
