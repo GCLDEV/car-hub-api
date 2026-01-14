@@ -4,16 +4,14 @@ export default (config: UserConfig) => {
   // Important: always return the modified config
   return mergeConfig(config, {
     optimizeDeps: {
-      // Disable force refresh to prevent esbuild service issues
+      // Prevent force refresh to avoid esbuild issues
       force: false,
       esbuildOptions: {
-        // Disable keep alive to prevent "service stopped" errors
-        keepAlive: false,
+        loader: {
+          '.js': 'jsx',
+          '.ts': 'tsx'
+        }
       }
-    },
-    esbuild: {
-      // Disable keep alive for esbuild
-      keepAlive: false,
     },
     server: {
       hmr: {
