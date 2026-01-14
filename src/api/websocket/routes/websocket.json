@@ -1,0 +1,20 @@
+{
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/websocket/join-conversation",
+      "handler": "websocket.joinConversation",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST", 
+      "path": "/websocket/leave-conversation",
+      "handler": "websocket.leaveConversation",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}
