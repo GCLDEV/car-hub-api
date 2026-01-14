@@ -10,8 +10,11 @@ RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev l
 # Copy package files
 COPY package.json yarn.lock* ./
 
-# Install dependencies
-RUN yarn install --frozen-lockfile
+# Install dependencies with increased memory limit
+RUN NODE_OPTIONS="--max-old-space-size=2048" yarn install --frozen-lockfile --production=false
+
+# Clean yarn cache to save space
+RUN yarn cache clean
 
 # Copy application code
 COPY . .
@@ -23,11 +26,8 @@ RUN mkdir -p public/uploads
 RUN chown -R node:node /opt/app
 USER node
 
-# Build the application
-RUN yarn build
-
 # Expose port
 EXPOSE 1337
 
-# Start the application
+# Start the application in development mode (builds on startup)
 CMD ["yarn", "develop"]
