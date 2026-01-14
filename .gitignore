@@ -203,3 +203,7 @@ config/local.json
 temp/
 tmp/
 *.tmp
+
+api-car-hub.pem
+.api-car-hub.pem
+
