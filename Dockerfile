@@ -10,17 +10,16 @@ RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev l
 # Copy package files
 COPY package.json yarn.lock* ./
 
-# Install only production dependencies
-RUN yarn install --production --frozen-lockfile
+# Install only production dependencies (much faster)
+RUN yarn install --production --frozen-lockfile --ignore-engines
 
 # Copy application code
 COPY . .
 
-# Create uploads directory
-RUN mkdir -p public/uploads
+# Create uploads directory and set permissions in one layer
+RUN mkdir -p public/uploads && chown -R node:node /opt/app
 
-# Set proper permissions
-RUN chown -R node:node /opt/app
+# Switch to node user
 USER node
 
 # Expose port

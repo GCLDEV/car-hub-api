@@ -30,11 +30,6 @@ services:
       APP_KEYS: app-key-1,app-key-2,app-key-3,app-key-4
       API_TOKEN_SALT: your-api-token-salt
       NODE_OPTIONS: "--max-old-space-size=512"
-      # esbuild/Vite fixes for Alpine
-      ESBUILD_BINARY_PATH: /usr/bin/esbuild
-      ESBUILD_USE_WASM: false
-      VITE_LEGACY_DEPS: true
-      DISABLE_ESBUILD_SERVICE: true
       STRAPI_DISABLE_ADMIN: false
     volumes:
       - ./config:/opt/app/config

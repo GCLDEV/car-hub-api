@@ -39,7 +39,6 @@ export default [
         'http://3.236.112.142:1337', // IP público AWS
         /^exp:\/\/.*/, // Expo development URLs
         /^https?:\/\/.*\.exp\.direct:.*/, // Expo tunnel URLs
-        /^https?:\/\/.*\.ngrok\.io$/, // ngrok URLs (manter para compatibilidade)
       ],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       credentials: true,

@@ -9,19 +9,9 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    force: false,
-    esbuildOptions: {
-      loader: {
-        '.js': 'jsx',
-        '.ts': 'tsx'
-      }
-    }
+    disabled: true, // Desabilita completamente a pré-otimização
   },
-  esbuild: {
-    logOverride: {
-      'this-is-undefined-in-esm': 'silent'
-    }
-  },
+  esbuild: false, // Desabilita esbuild completamente
   build: {
     rollupOptions: {
       external: ['fsevents']
