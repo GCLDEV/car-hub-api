@@ -9,8 +9,11 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    force: true,
+    force: false,
+    disabled: false,
     esbuildOptions: {
+      // Disable esbuild service to fix the error
+      keepAlive: false,
       loader: {
         '.js': 'jsx',
         '.ts': 'tsx'
@@ -18,6 +21,8 @@ export default defineConfig({
     }
   },
   esbuild: {
+    // Disable esbuild service worker
+    keepAlive: false,
     logOverride: {
       'this-is-undefined-in-esm': 'silent'
     }
