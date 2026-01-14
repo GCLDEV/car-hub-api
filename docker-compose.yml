@@ -19,7 +19,7 @@ services:
     container_name: car-hub-strapi
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       DATABASE_CLIENT: mysql
       DATABASE_HOST: db
       DATABASE_PORT: 3306
@@ -31,6 +31,7 @@ services:
       APP_KEYS: app-key-1,app-key-2,app-key-3,app-key-4
       API_TOKEN_SALT: your-api-token-salt
       NODE_OPTIONS: "--max-old-space-size=512"
+      STRAPI_DISABLE_ADMIN: false
     volumes:
       - ./config:/opt/app/config
       - ./src:/opt/app/src
@@ -42,10 +43,8 @@ services:
       - "1337:1337"
     depends_on:
       - db
-    deploy:
-      resources:
-        limits:
-          memory: 1G
+    mem_limit: 1400m
+    memswap_limit: 1400m
 
 volumes:
   db_data:
