@@ -26,5 +26,5 @@ USER node
 # Expose port
 EXPOSE 1337
 
-# Start without admin panel for now
-CMD ["yarn", "strapi", "start"]
+# Start in development mode
+CMD ["yarn", "develop"]
