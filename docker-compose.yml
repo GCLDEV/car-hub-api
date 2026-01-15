@@ -43,6 +43,8 @@ services:
       - "1337:1337"
     depends_on:
       - db
+    mem_limit: 1400m
+    memswap_limit: 1400m
 
 volumes:
   db_data:

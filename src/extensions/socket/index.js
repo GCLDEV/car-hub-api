@@ -60,7 +60,7 @@ module.exports = ({ strapi }) => ({
     // Event handlers
     io.on('connection', (socket) => {
       
-      // Auto-join em salas baseado no ID do usuário (fallback para ngrok)
+      // Auto-join em salas baseado no ID do usuário
       if (socket.user) {
         socket.join(`user:${socket.user.id}`);
       }
@@ -77,7 +77,7 @@ module.exports = ({ strapi }) => ({
         });
       });
 
-      // FALLBACK: Force join via HTTP endpoint (para contornar problemas de ngrok)
+      // FALLBACK: Force join via HTTP endpoint
       socket.on('force_join_conversation', (conversationId) => {
         const roomName = `conversation:${conversationId}`;
         socket.join(roomName);
