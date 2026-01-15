@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
@@ -17,7 +15,9 @@ services:
     command: --default-authentication-plugin=mysql_native_password
 
   strapi:
-    build: .
+    build: 
+      context: .
+      target: development
     container_name: car-hub-strapi
     restart: unless-stopped
     environment:
@@ -27,17 +27,18 @@ services:
       DATABASE_NAME: car_hub
       DATABASE_USERNAME: strapi
       DATABASE_PASSWORD: strapi123
-      JWT_SECRET: your-jwt-secret-key-here
-      ADMIN_JWT_SECRET: your-admin-jwt-secret-here
-      APP_KEYS: app-key-1,app-key-2,app-key-3,app-key-4
-      API_TOKEN_SALT: your-api-token-salt
+      JWT_SECRET: your-jwt-secret-key-here-with-at-least-32-chars
+      ADMIN_JWT_SECRET: your-admin-jwt-secret-here-with-at-least-32-chars
+      APP_KEYS: app-key-1-with-at-least-16-chars,app-key-2-with-at-least-16-chars,app-key-3-with-at-least-16-chars,app-key-4-with-at-least-16-chars
+      API_TOKEN_SALT: your-api-token-salt-with-at-least-16-chars
+      TRANSFER_TOKEN_SALT: your-transfer-token-salt-with-at-least-16-chars
     volumes:
-      - ./config:/opt/app/config
-      - ./src:/opt/app/src
-      - ./package.json:/opt/package.json
-      - ./yarn.lock:/opt/yarn.lock
-      - ./.env:/opt/app/.env
-      - ./public/uploads:/opt/app/public/uploads
+      - ./config:/app/config
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - ./.env:/app/.env
+      - ./public/uploads:/app/public/uploads
     ports:
       - "1337:1337"
     depends_on:
