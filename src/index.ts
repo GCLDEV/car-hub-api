@@ -149,14 +149,23 @@ export default {
    * run jobs, or perform some special logic.
    */
   async bootstrap({ strapi }) {
+    console.log('🚀 Starting Strapi with Socket.io...');
+    
     // Set up roles and permissions
     await setupRolesAndPermissions(strapi);
 
-    // 🔌 Inicializar WebSocket
+    // 🔌 Inicializar Socket.io com nossa implementação limpa
     try {
-      const socketExtension = require('./extensions/socket').default;
-      socketExtension({ strapi }).initialize();
-
+      const { SocketService } = await import('./sockets');
+      const httpServer = strapi.server.httpServer;
+      const socketService = SocketService.getInstance(httpServer, strapi);
+      
+      // 🌐 Tornar o socket service disponível globalmente
+      strapi.socketService = socketService;
+      
+      console.log('✅ Socket.io initialized successfully');
+      console.log('🎯 WebSocket available at: ws://localhost:1337');
+      
     } catch (error) {
       console.error('❌ Erro ao inicializar WebSocket:', error);
     }
