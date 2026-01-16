@@ -1,3 +1,5 @@
+// TEMPORARIAMENTE DESABILITADO PARA DEBUG DE TELA BRANCA
+/*
 import { Server } from 'socket.io'
 
 interface AuthenticatedSocket {
@@ -113,6 +115,16 @@ export default ({ strapi }) => {
       strapi.io = io
       
 
+    }
+  }
+}
+*/
+
+// EXPORTAÇÃO VAZIA PARA EVITAR ERROS
+export default ({ strapi }) => {
+  return {
+    initialize() {
+      // Socket temporariamente desabilitado
     }
   }
 }
