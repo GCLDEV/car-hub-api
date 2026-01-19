@@ -16,21 +16,50 @@ export function roomHandlers(socket: AuthenticatedSocket, strapi: Core.Strapi): 
   // 🚪 Entrar em uma conversa
   socket.on('joinConversation', async (data: ConversationData) => {
     try {
-      console.log(`🚪 ${socket.user.username} joining conversation: ${data.conversationId}`);
+      console.log(`🚪 ${socket.user.username} tentando entrar na conversa: ${data.conversationId}`, data);
 
       // 🔍 Verificar se a conversa existe e se o usuário é participante
-      const conversation = await strapi.documents('api::conversation.conversation').findOne({
-        documentId: data.conversationId,
+      // Usar entityService como a API REST usa
+      const conversation = await strapi.entityService.findOne('api::conversation.conversation', data.conversationId, {
         populate: ['participants']
       });
 
       if (!conversation) {
+        console.error(`❌ Conversa ${data.conversationId} não encontrada via entityService`);
         socket.emit('error', { message: 'Conversation not found' });
         return;
       }
 
-      const isParticipant = conversation.participants.some((p: any) => p.documentId === socket.userId);
+      // console.log(`✅ Conversa encontrada via entityService:`, {
+      //   id: conversation.id,
+      //   documentId: conversation.documentId,
+      //   participants: (conversation as any).participants?.length || 0
+      // });
+
+      const isParticipant = (conversation as any).participants.some((p: any) => 
+        p.id?.toString() === socket.user.id?.toString() || 
+        p.documentId === socket.userId ||
+        p.id === socket.user.id
+      );
+      
+      // console.log(`🔍 Verificação de participante:`, {
+      //   socketUserId: socket.user.id,
+      //   socketUserIdType: typeof socket.user.id,
+      //   socketDocumentId: socket.userId,
+      //   participantIds: (conversation as any).participants?.map((p: any) => ({ 
+      //     id: p.id, 
+      //     idType: typeof p.id,
+      //     documentId: p.documentId 
+      //   }))
+      // });
+      
       if (!isParticipant) {
+        console.error(`❌ Usuário ${socket.user.username} não é participante da conversa ${data.conversationId}`);
+        // console.log(`👥 Participantes:`, (conversation as any).participants?.map((p: any) => ({ 
+        //   id: p.id, 
+        //   documentId: p.documentId, 
+        //   username: p.username 
+        // })));
         socket.emit('error', { message: 'You are not a participant in this conversation' });
         return;
       }
@@ -38,6 +67,7 @@ export function roomHandlers(socket: AuthenticatedSocket, strapi: Core.Strapi): 
       // 🏠 Entrar na sala
       const roomName = `conversation-${data.conversationId}`;
       socket.join(roomName);
+      // console.log(`✅ ${socket.user.username} entrou na sala: ${roomName}`);
 
       // 📊 Notificar outros usuários na conversa
       socket.to(roomName).emit('userJoinedConversation', {
