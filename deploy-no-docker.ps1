@@ -6,7 +6,7 @@ param(
 )
 
 # Configurações
-$EC2_HOST = "ubuntu@ec2-3-235-79-223.compute-1.amazonaws.com"
+$EC2_HOST = "ubuntu@ec2-44-200-87-249.compute-1.amazonaws.com"
 $CONTAINER_NAME = "car-hub-api-container"
 $REMOTE_DIR = "/home/ubuntu/car-hub-deploy"
 
@@ -199,9 +199,9 @@ ssh -i $SSHKey -o StrictHostKeyChecking=no $EC2_HOST $RemoteScript
 
 Write-ColoredText "✅ Deployment do Car Hub API concluído!" "Green"
 Write-ColoredText "🌐 Sua API está disponível em:" "Blue"
-Write-ColoredText "   http://3.235.79.223" "Green"
-Write-ColoredText "   http://3.235.79.223:1337" "Green"
-Write-ColoredText "   Admin: http://3.235.79.223:1337/admin" "Green"
+Write-ColoredText "   http://44.200.87.249" "Green"
+Write-ColoredText "   http://44.200.87.249:1337" "Green"
+Write-ColoredText "   Admin: http://44.200.87.249:1337/admin" "Green"
 
 Write-ColoredText "`n📋 Comandos úteis:" "Yellow"
 Write-ColoredText "Ver logs: ssh -i $SSHKey $EC2_HOST 'sudo docker logs $CONTAINER_NAME'" "Blue"
