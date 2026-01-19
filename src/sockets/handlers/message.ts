@@ -38,19 +38,25 @@ export function messageHandlers(socket: AuthenticatedSocket, strapi: Core.Strapi
         return;
       }
 
-      // 🔍 Verificar se usuário pertence à conversa usando Strapi v5 API
-      const conversation = await strapi.documents('api::conversation.conversation').findOne({
-        documentId: data.conversationId,
+      // 🔍 Verificar se usuário pertence à conversa usando entityService como a API REST
+      const conversation = await strapi.entityService.findOne('api::conversation.conversation', data.conversationId, {
         populate: ['participants']
       });
 
       if (!conversation) {
+        console.error(`❌ Conversa ${data.conversationId} não encontrada via entityService`);
         socket.emit('error', { message: 'Conversation not found' });
         return;
       }
 
-      const isParticipant = conversation.participants.some((p: any) => p.documentId === socket.userId);
+      const isParticipant = (conversation as any).participants.some((p: any) => 
+        p.id?.toString() === socket.user.id?.toString() || 
+        p.documentId === socket.userId ||
+        p.id === socket.user.id
+      );
+      
       if (!isParticipant) {
+        console.error(`❌ Usuário ${socket.user.username} não é participante da conversa ${data.conversationId}`);
         socket.emit('error', { message: 'You are not a participant in this conversation' });
         return;
       }
@@ -91,7 +97,10 @@ export function messageHandlers(socket: AuthenticatedSocket, strapi: Core.Strapi
       };
 
       // 📡 Emitir para todos na conversa
-      socket.to(`conversation-${data.conversationId}`).emit('newMessage', messagePayload);
+      const roomName = `conversation-${data.conversationId}`;
+      // console.log(`📡 Emitindo newMessage para sala: ${roomName}`, messagePayload);
+      
+      socket.to(roomName).emit('newMessage', messagePayload);
       
       // ✅ Confirmar envio para o remetente
       socket.emit('messageSent', {
