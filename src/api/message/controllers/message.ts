@@ -87,6 +87,14 @@ export default factories.createCoreController('api::message.message' as any, ({ 
 
     const { receiver: receiverId, content, conversation: conversationId } = ctx.request.body.data
 
+    // console.log('🐛 [DEBUG] Dados recebidos:', { 
+    //   receiverId, 
+    //   content, 
+    //   conversationId, 
+    //   hasSocketService: !!((strapi as any).socketService),
+    //   hasIO: !!((strapi as any).socketService?.getIO())
+    // });
+
     // Se temos conversationId, buscar o receiver baseado na conversa
     if (conversationId && !receiverId) {
       const conversation = await strapi.entityService.findOne('api::conversation.conversation', conversationId, {
@@ -121,8 +129,6 @@ export default factories.createCoreController('api::message.message' as any, ({ 
     ctx.request.body.data.sender = user.id
     ctx.request.body.data.isRead = false
 
-
-
     const entity = await strapi.entityService.create('api::message.message', {
       data: ctx.request.body.data,
       populate: {
@@ -141,11 +147,19 @@ export default factories.createCoreController('api::message.message' as any, ({ 
       }
     })
 
-
-
     // 🔌 WEBSOCKET: Emitir nova mensagem em tempo real
     try {
-      if ((strapi as any).io && conversationId) {
+      const socketService = (strapi as any).socketService;
+      const io = socketService?.getIO();
+      
+      // console.log('🐛 [DEBUG WebSocket] Verificações:', { 
+      //   hasSocketService: !!socketService,
+      //   hasIO: !!io,
+      //   conversationId, 
+      //   typeOfConversationId: typeof conversationId 
+      // });
+      
+      if (io && conversationId) {
         const messagePayload = {
           id: entity.id,
           content: entity.content,
@@ -164,23 +178,16 @@ export default factories.createCoreController('api::message.message' as any, ({ 
           }
         };
         
-        // Emitir evento new_message para todos na sala da conversa
-        const roomName = `conversation:${conversationId}`;
+        // Emitir para a sala (usar o mesmo formato que o handler WebSocket)
+        const roomName = `conversation-${conversationId}`;
+        // console.log(`📡 [REST Controller] Emitindo newMessage para sala: ${roomName}`, messagePayload);
         
-        // Emitir para a sala (método principal)
-        (strapi as any).io.to(roomName).emit('new_message', messagePayload);
+        io.to(roomName).emit('newMessage', messagePayload);
         
-        // Emitir para todos os sockets como fallback (para teste)
-        (strapi as any).io.emit('new_message_broadcast', {
-          ...messagePayload,
-          broadcastType: 'fallback',
-          originalRoom: roomName
-        });
+        // Também emitir evento adicional para debug
+        io.to(roomName).emit('new_message', messagePayload);
         
-        // Também emitir para salas individuais dos usuários como fallback
-        (strapi as any).io.to(`user:${finalReceiverId}`).emit('new_message', messagePayload);
-        
-
+        // console.log(`✅ [REST Controller] Mensagem emitida via WebSocket para sala ${roomName}`);
         
         // Atualizar lastActivity da conversa
         await strapi.entityService.update('api::conversation.conversation', conversationId, {
@@ -190,37 +197,20 @@ export default factories.createCoreController('api::message.message' as any, ({ 
           }
         });
       } else {
-        
+        const debugInfo = {
+          hasSocketService: !!((strapi as any).socketService),
+          hasIO: !!((strapi as any).socketService?.getIO()),
+          conversationId,
+          typeOfConversationId: typeof conversationId,
+          socketServiceInstance: (strapi as any).socketService ? 'exists' : 'missing'
+        };
+        console.error('❌ [REST Controller] Condições WebSocket falharam:', debugInfo);
       }
     } catch (error) {
-      strapi.log.error('Erro ao emitir mensagem via WebSocket:', error);
+      console.error('❌ [REST Controller] Erro ao emitir WebSocket:', error);
     }
 
-    const sanitizedResults = await this.sanitizeOutput(entity, ctx)
-    
-    // Garantir que temos um objeto base para trabalhar
-    const baseResult = typeof sanitizedResults === 'object' && sanitizedResults !== null 
-      ? sanitizedResults 
-      : { id: entity.id, content: entity.content }
-    
-    // Garantir que o resultado inclua os dados essenciais
-    const enhancedResult = Object.assign({}, baseResult, {
-      // Adicionar dados do sender (usuário atual)
-      senderId: user.id,
-      sender: {
-        id: user.id,
-        username: user.username
-      },
-      // Adicionar dados do receiver
-      receiverId: finalReceiverId,
-      receiver: {
-        id: finalReceiverId
-      }
-    }) as any
-    
-
-    
-    return this.transformResponse(enhancedResult)
+    return this.transformResponse(entity)
   },
 
   // GET /api/messages/conversations - Lista conversas reais do usuário
