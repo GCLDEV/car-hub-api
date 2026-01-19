@@ -20,11 +20,25 @@ export async function authMiddleware(
   next: (err?: Error) => void,
   strapi: Core.Strapi
 ): Promise<void> {
+  let token: string | undefined;
+  
   try {
-    const token = (socket.handshake.auth.token as string) || (socket.handshake.query.token as string);
+    console.log('🔐 [WebSocket] Middleware de autenticação executado');
+    token = (socket.handshake.auth.token as string) || (socket.handshake.query.token as string);
 
+    // 🔓 Permitir conexões sem token para desenvolvimento/teste
     if (!token) {
-      return next(new Error('Authentication token required'));
+      console.log('🧪 [WebSocket] Conexão sem token - modo de teste');
+      // Criar um usuário anônimo para teste
+      (socket as AuthenticatedSocket).userId = 'anonymous';
+      (socket as AuthenticatedSocket).user = {
+        id: 'anonymous',
+        username: 'TestUser',
+        email: 'test@example.com',
+        role: 'test'
+      };
+      console.log('✅ [WebSocket] Usuário anônimo criado para teste');
+      return next();
     }
 
     // 🔑 Verificar token JWT
@@ -41,41 +55,67 @@ export async function authMiddleware(
     }
 
     // 👤 Buscar usuário no banco de dados usando Strapi v5 API
+    console.log(`🔍 [WebSocket] Buscando usuário com ID: ${decoded.id}`);
+    
     const user = await strapi.documents('plugin::users-permissions.user').findOne({
       documentId: decoded.id.toString(),
       populate: ['role'],
     });
 
+    // Se não encontrar por documentId, tenta por ID numérico (compatibilidade)
+    let finalUser = user;
     if (!user) {
+      console.log(`🔍 [WebSocket] Tentando busca por ID numérico: ${decoded.id}`);
+      
+      const users = await strapi.documents('plugin::users-permissions.user').findMany({
+        filters: { id: decoded.id },
+        populate: ['role'],
+      });
+      
+      finalUser = users.length > 0 ? users[0] : null;
+    }
+
+    if (!finalUser) {
+      console.error(`❌ [WebSocket] Usuário não encontrado: ID=${decoded.id}`);
       return next(new Error('User not found'));
     }
 
-    if (!user.confirmed) {
+    if (!finalUser.confirmed) {
       return next(new Error('User account not confirmed'));
     }
 
-    if (user.blocked) {
+    if (finalUser.blocked) {
       return next(new Error('User account is blocked'));
     }
 
     // ✅ Adicionar dados do usuário ao socket
     const authSocket = socket as AuthenticatedSocket;
-    authSocket.userId = user.documentId;
+    authSocket.userId = finalUser.documentId || finalUser.id.toString();
     authSocket.user = {
-      id: user.documentId,
-      username: user.username,
-      email: user.email,
-      role: user.role?.name || 'authenticated'
+      id: finalUser.documentId || finalUser.id.toString(),
+      username: finalUser.username,
+      email: finalUser.email,
+      role: finalUser.role?.name || 'authenticated'
     };
 
-    console.log(`🔌 User authenticated: ${user.username} (ID: ${user.documentId})`);
+    console.log(`✅ [WebSocket] User authenticated: ${finalUser.username} (ID: ${finalUser.documentId || finalUser.id})`);
     next();
     
   } catch (error: any) {
-    console.error('❌ Socket authentication error:', error.message);
+    console.error('❌ [WebSocket] Socket authentication error:', {
+      message: error.message,
+      name: error.name,
+      tokenProvided: !!token,
+      tokenLength: token?.length
+    });
     
     if (error.name === 'JsonWebTokenError') {
-      return next(new Error('Invalid token'));
+      console.error('🔐 [WebSocket] Erro de autenticação JWT - token inválido ou assinatura incorreta');
+      console.error('💡 [WebSocket] Possíveis causas:');
+      console.error('    - JWT_SECRET diferente no servidor');
+      console.error('    - Token expirado'); 
+      console.error('    - Usuário foi removido/desabilitado');
+      return next(new Error('User not found'));
     }
     
     if (error.name === 'TokenExpiredError') {

@@ -19,6 +19,7 @@ export default [
     config: {
       origin: [
         'http://localhost:3000',
+        'http://localhost:8080',  // Para teste WebSocket
         'http://localhost:19006',
         'exp://localhost:19006',
         /^https?:\/\/.*\.exp\.direct(:\d+)?$/,

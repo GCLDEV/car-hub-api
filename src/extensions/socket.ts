@@ -1,5 +1,3 @@
-// TEMPORARIAMENTE DESABILITADO PARA DEBUG DE TELA BRANCA
-/*
 import { Server } from 'socket.io'
 
 interface AuthenticatedSocket {
@@ -19,7 +17,7 @@ interface AuthenticatedSocket {
 export default ({ strapi }) => {
   return {
     initialize() {
-
+      console.log('🔌 Inicializando WebSocket Server...')
       
       const server = strapi.server.httpServer
       
@@ -28,55 +26,73 @@ export default ({ strapi }) => {
           origin: "*",
           methods: ["GET", "POST"]
         },
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        allowEIO3: true
       })
 
       // Middleware de autenticação
       io.use(async (socket, next) => {
         try {
           const token = socket.handshake.auth.token
-          
-          if (!token) {
+          console.log('🔐 WebSocket auth attempt:', { 
+            hasToken: !!token,
+            tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token'
+          })
 
-            return next(new Error('Authentication error'))
+          if (!token) {
+            console.error('❌ No token provided')
+            return next(new Error('Authentication failed: No token'))
           }
 
-          // Validar token usando Strapi JWT
-          const { id } = await strapi.plugins['users-permissions'].services.jwt.verify(token)
+          // Verificar token usando o serviço de autenticação do Strapi
+          const decoded = await strapi.plugins['users-permissions'].services.jwt.verify(token)
+          console.log('✅ Token decoded:', { userId: decoded.id })
           
-          const user = await strapi.entityService.findOne('plugin::users-permissions.user', id)
-          
-          if (!user) {
+          // Buscar usuário completo
+          const user = await strapi.entityService.findOne('plugin::users-permissions.user', decoded.id, {
+            populate: ['role']
+          })
 
+          if (!user) {
+            console.error('❌ User not found:', decoded.id)
             return next(new Error('User not found'))
           }
 
+          console.log('✅ WebSocket authenticated:', { userId: user.id, username: user.username })
+
+          // Adicionar informações do usuário ao socket
           ;(socket as any).userId = user.id
           ;(socket as any).user = user
-
           
           next()
         } catch (error) {
-
-          next(new Error('Authentication error'))
+          console.error('❌ Socket authentication error:', error.message)
+          next(new Error('Authentication failed: ' + error.message))
         }
       })
 
-      // Gerenciar conexões
-      io.on('connection', (socket) => {
-        const authSocket = socket as any
+      // Eventos de conexão
+      io.on('connection', (socket: any) => {
+        const authSocket = socket as AuthenticatedSocket
+        console.log('✅ WebSocket connected:', { userId: authSocket.userId, username: authSocket.user.username })
 
-
-        // Entrar em uma conversa
+        // Entrar em conversa
         socket.on('joinConversation', (conversationId) => {
           socket.join(`conversation-${conversationId}`)
-
+          console.log(`User ${authSocket.userId} joined conversation ${conversationId}`)
+          
+          // Notificar outros usuários que alguém entrou
+          socket.to(`conversation-${conversationId}`).emit('userEnteredConversation', {
+            userId: authSocket.userId,
+            conversationId,
+            username: authSocket.user.username
+          })
         })
 
-        // Sair de uma conversa
+        // Sair de conversa
         socket.on('leaveConversation', (conversationId) => {
           socket.leave(`conversation-${conversationId}`)
-
+          console.log(`User ${authSocket.userId} left conversation ${conversationId}`)
         })
 
         // Indicar que está digitando
@@ -106,25 +122,14 @@ export default ({ strapi }) => {
         })
 
         // Desconexão
-        socket.on('disconnect', () => {
-
+        socket.on('disconnect', (reason) => {
+          console.log('❌ WebSocket disconnected:', { userId: authSocket.userId, reason })
         })
       })
 
       // Armazenar referência do io no Strapi para uso em controllers
       strapi.io = io
-      
-
-    }
-  }
-}
-*/
-
-// EXPORTAÇÃO VAZIA PARA EVITAR ERROS
-export default ({ strapi }) => {
-  return {
-    initialize() {
-      // Socket temporariamente desabilitado
+      console.log('✅ WebSocket Server initialized')
     }
   }
 }

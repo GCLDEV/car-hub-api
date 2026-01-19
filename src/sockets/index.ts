@@ -32,6 +32,7 @@ export class SocketService {
       cors: {
         origin: [
           "http://localhost:3000",
+          "http://localhost:8080",  // Teste WebSocket
           "http://localhost:19006", // Expo Dev
           "exp://localhost:19006",   // Expo Local
           /^https?:\/\/.*\.exp\.direct(:\d+)?$/,  // Expo Published
@@ -41,8 +42,11 @@ export class SocketService {
         credentials: true
       },
       transports: ['websocket', 'polling'],
-      pingTimeout: 60000,
-      pingInterval: 25000,
+      pingTimeout: 60000,  // Mesmo valor do cliente
+      pingInterval: 25000, // Mesmo valor do cliente
+      allowEIO3: true,     // Compatibilidade
+      connectTimeout: 45000, // Timeout para conexão
+      upgradeTimeout: 30000, // Timeout para upgrade
     });
 
     this.setupMiddleware();
